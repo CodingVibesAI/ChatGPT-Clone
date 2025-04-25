@@ -1,6 +1,7 @@
 # ChatGPT Clone - Project Context
 
 ## Tech Stack
+
 - **Frontend**: Next.js 14 with App Router, TypeScript, React Server Components
 - **Styling**: Tailwind CSS + Shadcn/ui
 - **Backend**: Next.js API Routes + Edge Runtime for streaming
@@ -15,6 +16,7 @@
 ## Database Schema
 
 ### Users Table
+
 ```sql
 users (
   id uuid references auth.users primary key,
@@ -26,6 +28,7 @@ users (
 ```
 
 ### Conversations Table
+
 ```sql
 conversations (
   id uuid primary key default gen_random_uuid(),
@@ -39,6 +42,7 @@ conversations (
 ```
 
 ### Messages Table
+
 ```sql
 messages (
   id uuid primary key default gen_random_uuid(),
@@ -51,6 +55,7 @@ messages (
 ```
 
 ### Attachments Table
+
 ```sql
 attachments (
   id uuid primary key default gen_random_uuid(),
@@ -66,11 +71,13 @@ attachments (
 ## Core Features
 
 ### Authentication
+
 - Email/Password signup and login
 - Protected routes and API endpoints
 - Session management
 
 ### Chat Interface
+
 - Real-time streaming responses
 - Markdown rendering with syntax highlighting
 - Code block copying
@@ -79,6 +86,7 @@ attachments (
 - Mobile-responsive design
 
 ### Conversation Management
+
 - Create new conversations
 - Rename conversations
 - Delete conversations
@@ -86,6 +94,7 @@ attachments (
 - Filter conversations by date/model
 
 ### File Attachments
+
 - Drag and drop file upload
 - File type validation
 - Preview attachments
@@ -93,12 +102,14 @@ attachments (
 - Secure file storage and retrieval
 
 ### Model Selection
+
 - Switch between different Together.ai models
 - Model-specific settings
 - Token usage tracking
 - Cost estimation
 
 ### User Settings
+
 - Theme preferences (light/dark)
 - Message history preferences
 - Model defaults
@@ -107,6 +118,7 @@ attachments (
 ## Architecture
 
 ### Frontend Architecture
+
 - App Router based routing
 - Server Components by default
 - Client Components where necessary (interactivity)
@@ -115,12 +127,14 @@ attachments (
 - Progressive enhancement
 
 ### State Management
+
 - Server state with TanStack Query
 - UI state with Zustand
 - Form state with React Hook Form
 - Persistent settings in localStorage
 
 ### API Design
+
 - RESTful endpoints for CRUD operations
 - WebSocket/SSE for real-time features
 - Rate limiting and throttling
@@ -128,6 +142,7 @@ attachments (
 - API versioning
 
 ### Security Measures
+
 - Input sanitization
 - CORS configuration
 - Content Security Policy
@@ -136,6 +151,7 @@ attachments (
 - CSRF protection
 
 ### Performance Optimizations
+
 - Image optimization
 - Code splitting
 - Route prefetching
@@ -144,10 +160,11 @@ attachments (
 - Database indexing
 
 ## Development Practices
+
 - TypeScript for type safety
 - ESLint + Prettier for code quality
 - Husky for pre-commit hooks
 - Conventional commits
 - Unit and integration testing
 - Error monitoring and logging
-- CI/CD pipeline 
+- CI/CD pipeline
