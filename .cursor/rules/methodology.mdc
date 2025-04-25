@@ -10,3 +10,4 @@ Use engineering best practices and avoid unnecessary coupling.
 Break down the implementation into tasks and write them inside the 'tasks.md' file inside the knowledge_base folder.
 Consult the 'tasks.md' and update it once a feature has been developed and if the user is content with it.
 Always call the "Context7" MCP to stay up with the documentation of a particular tool if you are unsure about the latest and greatest version.
+Access the ui_references folder inside the knowledge_base to reference images of how the UI/UX should look like.
