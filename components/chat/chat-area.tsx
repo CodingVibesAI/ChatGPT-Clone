@@ -9,8 +9,8 @@ import * as Tooltip from '@radix-ui/react-tooltip'
 import React from 'react'
 
 const DUMMY_MESSAGES: { id: number; role: 'user' | 'assistant'; content: string }[] = [
-  { id: 1, role: 'user', content: 'Kako kombinovati trening snage sa BJJ-jem da bih poboljšao performanse i istovremeno izbegao pretreniranost?' },
-  { id: 2, role: 'assistant', content: 'Odlično pitanje! Kombinovanje treninga snage sa brazilskim jiu-jitsuom (BJJ) može da ti značajno poboljša performanse na strunjači, ali moraš pažljivo da planiraš kako bi izbegao pretreniranost. Evo nekoliko praktičnih smernica:\n\n**1. Postavi prioritete**\nOdredi šta ti je trenutno važnije:\n\n- **Ako ti je BJJ prioritet**, trening snage treba da podržava tvoju jiu-jitsu praksu (npr. niža frekvencija, više fokus na održavanje i prevenciju povreda).\n- **Ako ti je cilj snaga**, možeš smanjiti broj BJJ sesija ili njihovu intenzivnost dok traje faza izgradnje snage.\n\n**2. Optimalna nedeljna struktura**\nUopšteno, dobra kombinacija izgleda ovako:' },
+  { id: 1, role: 'user', content: 'How are you?' },
+  { id: 2, role: 'assistant', content: 'Quite well, thank you!' },
 ]
 
 function MessageBubble({ role, content }: { role: 'user' | 'assistant'; content: string }) {
