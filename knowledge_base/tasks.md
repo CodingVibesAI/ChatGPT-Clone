@@ -10,23 +10,42 @@
 - [x] Create authentication components (SignIn, SignUp)
 - [x] Set up protected routes and middleware
 
-- [X] Initialize Next.js project with TypeScript and App Router
-- [ ] Set up Tailwind CSS and shadcn/ui
-- [ ] Configure ESLint and Prettier
-- [ ] Set up Supabase project and database
-- [ ] Implement database schema (users, conversations, messages, attachments)
-- [ ] Create authentication components (SignIn, SignUp)
-- [ ] Set up protected routes and middleware
+## Phase 2: Chat Interface Core (Pixel-Perfect, Professional, Atomic)
 
-## Phase 2: Chat Interface Core
+> **Reference:** Use `knowledge_base/ui_references/image.png` for every visual detail. Do not move to the next task until the current one is pixel-perfect.
 
-- [ ] Create chat layout and components
-- [ ] Implement basic message list and input
-- [ ] Set up Together.ai API integration
-- [ ] Implement streaming responses
-- [ ] Add markdown rendering with syntax highlighting
-- [ ] Create code block component with copy functionality
-- [ ] Implement mobile-responsive design
+### 2.1 Sidebar (Left Panel)
+- [x] Sidebar Header: Add ChatGPT logo/text, dropdown, and correct spacing
+- [x] New Chat Button: Small, flush with top, correct icon, dropdown arrow, correct hover/focus states
+- [x] Search Bar: Grouped visually with New Chat, correct height, placeholder, and icon
+- [x] Conversation List: Add icons, correct spacing, hover/active states, date groupings (Today, Previous 7 Days, Previous 30 Days)
+- [x] User Avatar/Settings: Add avatar/settings button at the bottom, correct alignment and spacing
+
+### 2.2 Main Chat Area (Center Panel)
+- [x] Background: Use exact ChatGPT background color and gradients
+- [x] Prompt: Centered, correct font size/weight, grouped with input when empty
+- [x] Message List: Centered, correct spacing, bubble style, scrollable, floating scroll-to-bottom button
+- [x] Gradients/Shadows: Add subtle gradients and shadows as in ChatGPT
+
+### 2.3 Input Bar (Bottom Floating)
+- [x] Bar Style: Thick, rounded, floating, correct background, border, and shadow
+- [x] Plus Button: On the left, correct icon, spacing, and hover/focus states
+- [x] Action Buttons: Add Search, Deep research, Create image, More, with tooltips and correct icons
+- [x] Send Button: Correct green, shape, icon, hover/focus/active states
+- [x] Action Icons Row: Below input, left-aligned, send button right-aligned
+- [x] Input Field: Correct font, padding, placeholder, and focus style
+
+### 2.4 Responsiveness & Polish
+- [x] Fluid Layout: Sidebar and chat area scale smoothly, use min/max constraints
+- [x] Mobile/Tablet: Sidebar collapses, input and prompt stack, all elements remain accessible
+- [~] Accessibility: Add aria-labels, keyboard navigation, and focus rings (SKIPPED)
+- [ ] Visual QA: Compare to ChatGPT at multiple breakpoints, adjust spacing, font, and color for pixel-perfection (CURRENT TASK)
+
+### 2.5 Professional Atomic Structure
+- [ ] Refactor: Break UI into atomic components (SidebarHeader, SidebarList, SidebarItem, ChatPrompt, ChatInput, ChatMessage, etc.)
+- [ ] Use exact color palette, spacing, and icons from ChatGPT (inspect their CSS if needed)
+- [ ] Add all missing UI elements, even as placeholders
+- [ ] Iterate and visually test after each chunk
 
 ## Phase 3: Conversation Management
 
