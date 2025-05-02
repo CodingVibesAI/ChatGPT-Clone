@@ -42,10 +42,9 @@
 - [~] Visual QA: Compare to ChatGPT at multiple breakpoints, adjust spacing, font, and color for pixel-perfection.
 
 ### 2.5 Professional Atomic Structure
-- [ ] Use exact color palette, spacing, and icons from ChatGPT (inspect their CSS if needed) (CURRENT TASK)
-- [ ] Add all missing UI elements, even as placeholders
-- [ ] Iterate and visually test after each chunk
-- [ ] Refactor: Break UI into atomic components (SidebarHeader, SidebarList, SidebarItem, ChatPrompt, ChatInput, ChatMessage, etc.)
+
+- [x] Use exact color palette, spacing, and icons from ChatGPT (inspect their CSS if needed)
+- [x] Refactor: Break UI into atomic components (SidebarHeader, SidebarList, SidebarItem, ChatPrompt, ChatInput, ChatMessage, etc.) (CURRENT TASK)
 
 ## Phase 3: Conversation Management
 
