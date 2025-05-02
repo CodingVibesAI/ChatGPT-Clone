@@ -39,13 +39,13 @@
 - [x] Fluid Layout: Sidebar and chat area scale smoothly, use min/max constraints
 - [x] Mobile/Tablet: Sidebar collapses, input and prompt stack, all elements remain accessible
 - [~] Accessibility: Add aria-labels, keyboard navigation, and focus rings (SKIPPED)
-- [ ] Visual QA: Compare to ChatGPT at multiple breakpoints, adjust spacing, font, and color for pixel-perfection (CURRENT TASK)
+- [~] Visual QA: Compare to ChatGPT at multiple breakpoints, adjust spacing, font, and color for pixel-perfection.
 
 ### 2.5 Professional Atomic Structure
-- [ ] Refactor: Break UI into atomic components (SidebarHeader, SidebarList, SidebarItem, ChatPrompt, ChatInput, ChatMessage, etc.)
-- [ ] Use exact color palette, spacing, and icons from ChatGPT (inspect their CSS if needed)
+- [ ] Use exact color palette, spacing, and icons from ChatGPT (inspect their CSS if needed) (CURRENT TASK)
 - [ ] Add all missing UI elements, even as placeholders
 - [ ] Iterate and visually test after each chunk
+- [ ] Refactor: Break UI into atomic components (SidebarHeader, SidebarList, SidebarItem, ChatPrompt, ChatInput, ChatMessage, etc.)
 
 ## Phase 3: Conversation Management
 
