@@ -90,7 +90,7 @@ export default function ChatArea() {
                 <ChevronDown size={22} className="text-[#b4bcd0]" />
               </button>
             )}
-            <div className="fixed bottom-0 left-[260px] right-0 flex justify-center bg-gradient-to-t from-[#131313] via-[#131313cc] to-transparent pb-6 pt-4 z-10">
+            <div className="w-full flex justify-center bg-gradient-to-t from-[#131313] via-[#131313cc] to-transparent pb-6 pt-4 z-10">
               <div className="w-full max-w-2xl px-4">
                 <ChatInput />
               </div>

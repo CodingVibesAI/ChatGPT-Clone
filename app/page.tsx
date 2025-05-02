@@ -9,14 +9,13 @@ export default function ChatPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
 
   return (
-    <div className="flex h-screen w-full bg-gradient-to-b from-[#23272f] via-[#202123] to-[#131313]">
-      {sidebarOpen && (
-        <aside className="w-[260px] min-w-[260px] max-w-[260px] h-screen hidden md:block">
-          <Sidebar />
-        </aside>
-      )}
+    <div className="flex h-screen w-full bg-gradient-to-b from-[#23272f] via-[#202123] to-[#131313] relative">
+      {/* Sidebar as flex child, always rendered, mini when closed */}
+      <div className={`transition-all duration-200 h-full ${sidebarOpen ? 'w-[260px]' : 'w-[72px]'} flex-shrink-0 overflow-hidden`}>
+        <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
+      </div>
       <main className="flex-1 min-w-0 flex flex-col h-screen">
-        <Header onToggleSidebar={() => setSidebarOpen((open) => !open)} />
+        <Header />
         <div className="flex-1 flex flex-col">
           <ChatArea />
         </div>
@@ -29,7 +28,7 @@ export default function ChatPage() {
           onClick={() => setSidebarOpen(false)}
         >
           <aside className="absolute left-0 top-0 w-[260px] h-full bg-[#202123] shadow-lg">
-            <Sidebar />
+            <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
           </aside>
         </div>
       )}

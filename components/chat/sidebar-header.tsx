@@ -1,4 +1,3 @@
-import { ChevronDown } from 'lucide-react'
 
 export default function SidebarHeader() {
   return (
@@ -8,7 +7,6 @@ export default function SidebarHeader() {
       aria-label="Workspace switcher"
     >
       <span className="text-[17px] font-medium text-white tracking-tight">ChatGPT Clone</span>
-      <ChevronDown size={16} className="text-[#b4bcd0] ml-1" />
     </button>
   )
 } 
