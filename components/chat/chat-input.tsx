@@ -1,8 +1,24 @@
 import { Button } from '@/components/ui/button'
-import { LucideSend, LucidePlus, Globe, Image as ImageIcon, Search, MoreHorizontal, CloudUpload, Upload } from 'lucide-react'
+import { LucideSend, Globe, Image as ImageIcon, Search, MoreHorizontal, Upload } from 'lucide-react'
 import * as Tooltip from '@radix-ui/react-tooltip'
+import { useActiveConversation } from '@/hooks/use-active-conversation'
+import { useCreateConversation } from '@/hooks/use-create-conversation'
+import { useCreateMessage } from '@/hooks/use-create-message'
+import { useUser } from '@supabase/auth-helpers-react'
+import { useState } from 'react'
 
 export default function ChatInput() {
+  const { activeConversationId, setActiveConversationId } = useActiveConversation()
+  const user = useUser()
+  const userId = user?.id
+  const createConversation = useCreateConversation({
+    onSuccess: (conv) => {
+      setActiveConversationId(conv.id)
+    },
+  })
+  const createMessage = useCreateMessage()
+  const [error, setError] = useState<string | null>(null)
+
   return (
     <form
       className="w-full max-w-[700px] mx-auto relative flex flex-col gap-0"
@@ -16,15 +32,41 @@ export default function ChatInput() {
         fontFamily: "var(--font-sans)",
         fontSize: 16,
       }}
-      onSubmit={e => {
+      onSubmit={async e => {
         e.preventDefault();
+        setError(null)
         const input = e.currentTarget.querySelector('input');
         if (input && input.value.trim()) {
-          // sendMessage(input.value); // call your send function here
-          input.value = '';
+          const content = input.value.trim()
+          try {
+            if (!activeConversationId) {
+              if (userId && !createConversation.isPending) {
+                // TODO: Don't hardcode model
+                const conv = await createConversation.mutateAsync({ user_id: userId, model: 'GPT-4o' })
+                setActiveConversationId(conv.id)
+                await createMessage.mutateAsync({ conversation_id: conv.id, content, role: 'user' })
+              }
+            } else {
+              await createMessage.mutateAsync({ conversation_id: activeConversationId, content, role: 'user' })
+            }
+            input.value = '';
+          } catch (err: unknown) {
+            // Log the error for debugging
+            console.error('Chat send error:', err)
+            if (typeof err === 'object' && err !== null && 'message' in err && typeof (err as { message?: unknown }).message === 'string') {
+              setError((err as { message: string }).message)
+            } else if (typeof err === 'string') {
+              setError(err)
+            } else {
+              setError(JSON.stringify(err))
+            }
+          }
         }
       }}
     >
+      {error && (
+        <div className="text-sm text-red-500 mb-2">{error}</div>
+      )}
       <div className="flex items-center gap-2 w-full">
        
         <input

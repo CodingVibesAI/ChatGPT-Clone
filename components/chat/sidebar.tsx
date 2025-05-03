@@ -3,20 +3,43 @@ import SidebarHeader from './sidebar-header'
 import SidebarList from './sidebar-list'
 import SidebarFooter from './sidebar-footer'
 import { LucidePlus, Menu } from 'lucide-react'
+import { useConversations } from '@/hooks/use-conversations'
+import type { Conversation } from './sidebar-list'
+import { useUser } from '@supabase/auth-helpers-react'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { useCreateConversation } from '@/hooks/use-create-conversation'
+import { useActiveConversation } from '@/hooks/use-active-conversation'
 
-const conversations = [
-  { id: 1, title: 'Vibe Coding', dateGroup: 'Previous 7 Days' },
-  { id: 2, title: 'AlgoTrading101', dateGroup: 'Previous 7 Days' },
-]
+function groupConversations(convs: Conversation[]): { label: string, items: Conversation[] }[] {
+  const now = new Date()
+  const today: Conversation[] = []
+  const prev7: Conversation[] = []
+  const prev30: Conversation[] = []
+  const older: Conversation[] = []
+  convs.forEach(conv => {
+    const d = new Date(conv.created_at)
+    const diff = (now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24)
+    if (diff < 1) today.push(conv)
+    else if (diff < 7) prev7.push(conv)
+    else if (diff < 30) prev30.push(conv)
+    else older.push(conv)
+  })
+  return [
+    { label: 'Today', items: today },
+    { label: 'Previous 7 Days', items: prev7 },
+    { label: 'Previous 30 Days', items: prev30 },
+    { label: 'Older', items: older },
+  ]
+}
 
-const dateGroups = [
-  { label: 'Today', items: [] },
-  { label: 'Yesterday', items: [] },
-  { label: 'Previous 7 Days', items: conversations },
-  { label: 'Previous 30 Days', items: [] },
-]
-
-function MiniSidebar({ setOpen }: { setOpen: (open: boolean) => void }) {
+function MiniSidebar({ setOpen, userId }: { setOpen: (open: boolean) => void, userId?: string }) {
+  const setActiveConversationId = useActiveConversation(s => s.setActiveConversationId)
+  const createConversation = useCreateConversation({
+    onSuccess: (data) => {
+      setActiveConversationId(data.id)
+    },
+  })
   return (
     <div className="flex flex-col items-center py-4 gap-2">
       <button
@@ -28,7 +51,11 @@ function MiniSidebar({ setOpen }: { setOpen: (open: boolean) => void }) {
       </button>
       <button
         className="w-10 h-10 flex items-center justify-center text-[#ececf1] hover:bg-[#343541] rounded-lg"
-        onClick={() => {/* new chat logic */}}
+        onClick={() => {
+          if (userId && !createConversation.isPending) {
+            createConversation.mutate({ user_id: userId, model: 'GPT-4o' })
+          }
+        }}
         aria-label="New chat"
       >
         <LucidePlus size={22} />
@@ -38,7 +65,15 @@ function MiniSidebar({ setOpen }: { setOpen: (open: boolean) => void }) {
 }
 
 export default function Sidebar({ open, setOpen }: { open: boolean, setOpen: (open: boolean) => void }) {
-  const [showSearch, setShowSearch] = useState(false)
+  const [search, setSearch] = useState('')
+  const user = useUser()
+  const userId = user?.id
+  const { data, isLoading, isError } = useConversations(userId)
+  // Filter conversations by search
+  const filtered = (data || []).filter(c =>
+    c.title.toLowerCase().includes(search.toLowerCase())
+  )
+  const grouped = groupConversations(filtered)
 
   return (
     <aside
@@ -47,25 +82,38 @@ export default function Sidebar({ open, setOpen }: { open: boolean, setOpen: (op
     >
       {open ? (
         <>
-          <SidebarHeader open={open} setOpen={setOpen} setShowSearch={setShowSearch} />
-          <SidebarList dateGroups={dateGroups} />
-          <SidebarFooter />
-          {/* Search modal */}
-          {showSearch && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-              <div className="bg-[#353740] rounded-xl p-6 w-full max-w-md">
-                <input
-                  className="w-full bg-transparent border-b border-[#ececf1] text-[#ececf1] placeholder-[#b4bcd0] py-2 px-3 outline-none"
-                  placeholder="Search..."
-                  autoFocus
-                  onBlur={() => setShowSearch(false)}
-                />
-              </div>
+          <SidebarHeader open={open} setOpen={setOpen} userId={userId} />
+          {/* Search input always visible */}
+          <div className="px-2 pb-2">
+            <input
+              className="w-full bg-[#353740] border border-[#23272f] rounded-md px-3 py-2 text-[#ececf1] placeholder-[#b4bcd0] outline-none focus:border-[#ececf1] focus:ring-2 focus:ring-[#ececf1] transition"
+              placeholder="Search conversations..."
+              aria-label="Search conversations"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              tabIndex={0}
+            />
+          </div>
+          {!user ? (
+            <div className="flex-1 flex flex-col items-center justify-center text-[#8e8ea0] gap-4">
+              <span className="text-base text-center">Sign in to view your conversations.</span>
+              <Link href="/sign-in" passHref>
+                <Button variant="secondary" size="lg" className="w-full max-w-[180px]">Sign In</Button>
+              </Link>
             </div>
+          ) : isLoading ? (
+            <div className="flex-1 flex items-center justify-center text-[#8e8ea0]">Loading...</div>
+          ) : isError ? (
+            <div className="flex-1 flex items-center justify-center text-red-500">Error loading conversations</div>
+          ) : grouped.every(g => g.items.length === 0) ? (
+            <div className="flex-1 flex items-center justify-center text-[#8e8ea0] px-6">No conversations yet. Start a new conversation.</div>
+          ) : (
+            <SidebarList grouped={grouped} userId={userId} />
           )}
+          <SidebarFooter />
         </>
       ) : (
-        <MiniSidebar setOpen={setOpen} />
+        <MiniSidebar setOpen={setOpen} userId={userId} />
       )}
     </aside>
   )

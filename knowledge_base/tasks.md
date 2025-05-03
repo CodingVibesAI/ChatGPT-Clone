@@ -48,12 +48,44 @@
 
 ## Phase 3: Conversation Management
 
-- [ ] Create conversation list component
-- [ ] Implement conversation CRUD operations
-- [ ] Add conversation search functionality
-- [ ] Implement conversation filters
-- [ ] Add conversation renaming
-- [ ] Create conversation settings modal
+### 3.1 Conversation List Supabase Integration
+- [x] Define Supabase schema for conversations (id, user_id, title, created_at, updated_at, etc.)
+- [x] Set up Supabase client and types in the frontend
+- [x] Fetch conversations from Supabase and display in SidebarList
+- [x] Subscribe to real-time updates for conversations
+- [x] Handle loading and error states in the UI
+- [x] Ensure every authenticated user has a row in public.users (trigger + manual)
+
+### 3.2 Conversation CRUD Operations
+- [x] Implement create conversation (New Chat button and chat input)
+- [x] Implement delete conversation (context menu)
+- [ ] Fix: Conversation rename (inline) should persist and update UI correctly (currently buggy)
+- [x] Implement optimistic UI updates for CRUD actions
+- [x] Add error handling and rollback for failed operations
+- [x] Clear active conversation if deleted
+
+### 3.3 Conversation Search & Filter
+- [ ] Add search input to sidebar
+- [ ] Implement client-side search/filtering of conversations
+- [ ] (Optional) Implement server-side search for large lists
+- [ ] Add filter options (e.g., by date, favorites, etc.)
+
+### 3.4 State Management & Real-Time
+- [x] Use Zustand store for active conversation (global, no prop drilling)
+- [x] Invalidate/fetch React Query cache on real-time updates
+- [x] Ensure chat area/input bar always fill available space
+
+### 3.5 UI/UX & Edge Cases
+- [x] Sidebar collapses/expands smoothly
+- [x] Show friendly message if no conversations
+- [x] Show sign-in prompt if not authenticated
+- [x] Three-dot menu only on hover, always on top, highlight never disappears
+- [x] Remove unwanted button highlights/focus rings
+- [x] Fix chat input bar jumping; always anchored
+- [x] Center prompt/input when no messages
+- [x] Fix React key warnings and linter errors
+- [x] Handle edge cases: rapid create/delete, rename to empty, etc.
+- [ ] Ensure accessibility: keyboard navigation, aria-labels for menus/inputs
 
 ## Phase 4: File Attachments
 

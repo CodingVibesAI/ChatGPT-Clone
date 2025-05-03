@@ -1,6 +1,14 @@
-import { LucidePlus, LucideSearch, Menu } from 'lucide-react'
+import { LucidePlus, Menu } from 'lucide-react'
+import { useCreateConversation } from '@/hooks/use-create-conversation'
+import { useActiveConversation } from '@/hooks/use-active-conversation'
 
-export default function SidebarHeader({ open, setOpen, setShowSearch }: { open: boolean, setOpen: (open: boolean) => void, setShowSearch: (v: boolean) => void }) {
+export default function SidebarHeader({ open, setOpen, userId }: { open: boolean, setOpen: (open: boolean) => void, userId?: string }) {
+  const setActiveConversationId = useActiveConversation(s => s.setActiveConversationId)
+  const createConversation = useCreateConversation({
+    onSuccess: (data) => {
+      setActiveConversationId(data.id)
+    },
+  })
   return (
     <div className="flex flex-row items-center justify-between py-4 px-2">
       <button
@@ -13,17 +21,14 @@ export default function SidebarHeader({ open, setOpen, setShowSearch }: { open: 
       <div className="flex flex-row items-center gap-2 ml-auto">
         <button
           className="w-10 h-10 flex items-center justify-center text-[#ececf1] hover:bg-[#343541] rounded-lg"
-          onClick={() => {/* new chat logic */}}
+          onClick={() => {
+            if (userId && !createConversation.isPending) {
+              createConversation.mutate({ user_id: userId, model: 'GPT-4o' })
+            }
+          }}
           aria-label="New chat"
         >
           <LucidePlus size={22} />
-        </button>
-        <button
-          className="w-10 h-10 flex items-center justify-center text-[#ececf1] hover:bg-[#343541] rounded-lg"
-          onClick={() => setShowSearch(true)}
-          aria-label="Search"
-        >
-          <LucideSearch size={22} />
         </button>
       </div>
     </div>

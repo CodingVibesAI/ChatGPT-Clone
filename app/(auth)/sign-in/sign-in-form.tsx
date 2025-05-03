@@ -8,7 +8,7 @@ import * as z from 'zod'
 import { Button } from '@/components/ui/button'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { createClient } from '@/lib/supabase/client'
+import { supabase } from '@/lib/supabase/client'
 
 const formSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -33,7 +33,6 @@ export function SignInForm() {
       setIsLoading(true)
       setError(null)
       
-      const supabase = createClient()
       const { error } = await supabase.auth.signInWithPassword({
         email: values.email,
         password: values.password,
