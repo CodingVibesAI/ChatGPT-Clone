@@ -85,21 +85,21 @@
 - [x] Center prompt/input when no messages
 - [x] Fix React key warnings and linter errors
 - [x] Handle edge cases: rapid create/delete, rename to empty, etc.
-- [ ] Ensure accessibility: keyboard navigation, aria-labels for menus/inputs
+- [x] Ensure accessibility: keyboard navigation, aria-labels for menus/inputs
 
 ## Phase 4: File Attachments
 
-- [ ] Set up Supabase Storage buckets
-- [ ] Create file upload component
-- [ ] Implement drag and drop functionality
-- [ ] Add file type validation
-- [ ] Create file preview component
-- [ ] Implement file deletion
-- [ ] Add file size limits and validation
+- [x] Set up Supabase Storage buckets
+- [x] Create file upload component
+- [x] Implement drag and drop functionality
+- [x] Add file type validation
+- [x] Create file preview component
+- [x] Implement file deletion
+- [x] Add file size limits and validation
 
 ## Phase 5: Model Selection and Settings
-
-- [ ] Create model selection component
+- [ ] Connect to Together.AI API
+- [ ] Create model selection component based on Together.AI API
 - [ ] Implement model switching logic
 - [ ] Add model-specific settings
 - [ ] Implement token usage tracking
