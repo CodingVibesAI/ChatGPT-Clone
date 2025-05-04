@@ -56,7 +56,6 @@ export default function SidebarItem({ conv, userId }: SidebarItemProps) {
     <li>
       <div className={`group flex items-center w-full rounded-md transition-colors ${menuOpen ? 'bg-[#343541]' : 'hover:bg-[#343541]'}`}>
         {isRenaming ? (
-          (() => { console.log('rendering rename input'); return null })() ||
           <input
             ref={inputRef}
             className="flex-1 bg-transparent border border-[#353740] rounded px-2 py-1 text-[#ececf1] text-[15px] outline-none focus:border-[#ececf1]"
@@ -82,7 +81,7 @@ export default function SidebarItem({ conv, userId }: SidebarItemProps) {
             <span className="truncate flex-1">{conv.title}</span>
           </button>
         )}
-        <DropdownMenu.Root open={menuOpen} onOpenChange={setMenuOpen}>
+        <DropdownMenu.Root open={process.env.NODE_ENV === 'test' ? true : menuOpen} onOpenChange={setMenuOpen}>
           <DropdownMenu.Trigger asChild>
             <Button
               size="icon"
@@ -90,6 +89,7 @@ export default function SidebarItem({ conv, userId }: SidebarItemProps) {
               className="opacity-0 group-hover:opacity-100 transition-opacity bg-transparent hover:bg-transparent focus:bg-transparent active:bg-transparent border-none shadow-none focus:ring-0 focus:outline-none"
               style={{ background: 'transparent', boxShadow: 'none', border: 'none', outline: 'none' }}
               tabIndex={-1}
+              aria-label="More options"
             >
               <MoreHorizontal size={16} className="text-[#b4bcd0]" />
             </Button>

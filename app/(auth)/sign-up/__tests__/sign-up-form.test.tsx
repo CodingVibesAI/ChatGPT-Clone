@@ -1,45 +1,49 @@
+/* eslint-disable no-restricted-syntax, @typescript-eslint/no-var-requires */
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { SignUpForm } from '../sign-up-form'
-import { createClient } from '@/lib/supabase/client'
+import { vi, describe, it, beforeEach, expect } from 'vitest'
 
-// Mock the createClient module
-jest.mock('@/lib/supabase/client', () => ({
-  createClient: jest.fn()
+let signUp: ReturnType<typeof vi.fn>, getUser: ReturnType<typeof vi.fn>, insert: ReturnType<typeof vi.fn>
+let mockCreateClientImpl: () => object = () => ({
+  auth: {
+    signUp,
+    getUser,
+  },
+  from: () => ({ insert }),
+})
+
+vi.mock('@/lib/supabase/client', () => ({
+  createSupabaseClient: (): object => mockCreateClientImpl(),
 }))
 
 describe('SignUpForm', () => {
   beforeEach(() => {
-    // Reset all mocks before each test
-    jest.clearAllMocks()
-    
-    // Set up the mock implementation for createClient
-    ;(createClient as jest.Mock).mockReturnValue({
+    signUp = vi.fn().mockResolvedValue({ error: null })
+    getUser = vi.fn().mockResolvedValue({ data: { user: { id: '123' } } })
+    insert = vi.fn().mockResolvedValue({ error: null })
+    mockCreateClientImpl = () => ({
       auth: {
-        signUp: jest.fn().mockResolvedValue({ error: null }),
-        getUser: jest.fn().mockResolvedValue({ data: { user: { id: '123' } } }),
+        signUp,
+        getUser,
       },
-      from: () => ({
-        insert: jest.fn().mockResolvedValue({ error: null }),
-      }),
+      from: () => ({ insert }),
     })
+    vi.clearAllMocks()
   })
 
-  it('renders sign up form', () => {
+  it('renders sign up form', async () => {
+    const { SignUpForm } = await import('@/components/auth/sign-up-form')
     render(<SignUpForm />)
-    
-    expect(screen.getByLabelText(/full name/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /create account/i })).toBeInTheDocument()
   })
 
   it('shows validation errors for invalid input', async () => {
+    const { SignUpForm } = await import('@/components/auth/sign-up-form')
     render(<SignUpForm />)
-    
     const signUpButton = screen.getByRole('button', { name: /create account/i })
     fireEvent.click(signUpButton)
-    
     await waitFor(() => {
       expect(screen.getByText(/full name must be at least 2 characters/i)).toBeInTheDocument()
       expect(screen.getByText(/invalid email address/i)).toBeInTheDocument()
@@ -48,18 +52,23 @@ describe('SignUpForm', () => {
   })
 
   it('handles successful sign up', async () => {
+    signUp.mockResolvedValue({ error: null })
+    getUser.mockResolvedValue({ data: { user: { id: '123' } } })
+    insert.mockResolvedValue({ error: null })
+    mockCreateClientImpl = () => ({
+      auth: { signUp, getUser },
+      from: () => ({ insert }),
+    })
+    const { SignUpForm } = await import('@/components/auth/sign-up-form')
     const user = userEvent.setup()
     render(<SignUpForm />)
-    
     await user.type(screen.getByLabelText(/full name/i), 'John Doe')
     await user.type(screen.getByLabelText(/email/i), 'test@example.com')
     await user.type(screen.getByLabelText(/password/i), 'password123')
-    
     const signUpButton = screen.getByRole('button', { name: /create account/i })
     await user.click(signUpButton)
-    
     await waitFor(() => {
-      expect(createClient().auth.signUp).toHaveBeenCalledWith({
+      expect(signUp).toHaveBeenCalledWith({
         email: 'test@example.com',
         password: 'password123',
         options: {
@@ -68,28 +77,24 @@ describe('SignUpForm', () => {
           },
         },
       })
+      expect(insert).toHaveBeenCalled()
     })
   })
 
   it('handles sign up error', async () => {
-    ;(createClient as jest.Mock).mockReturnValue({
-      auth: {
-        signUp: jest.fn().mockResolvedValue({
-          error: new Error('Email already exists'),
-        }),
-      },
+    signUp.mockResolvedValue({ error: new Error('Email already exists') })
+    mockCreateClientImpl = () => ({
+      auth: { signUp },
+      from: () => ({ insert }),
     })
-
+    const { SignUpForm } = await import('@/components/auth/sign-up-form')
     const user = userEvent.setup()
     render(<SignUpForm />)
-    
     await user.type(screen.getByLabelText(/full name/i), 'John Doe')
     await user.type(screen.getByLabelText(/email/i), 'test@example.com')
     await user.type(screen.getByLabelText(/password/i), 'password123')
-    
     const signUpButton = screen.getByRole('button', { name: /create account/i })
     await user.click(signUpButton)
-    
     await waitFor(() => {
       expect(screen.getByText(/email already exists/i)).toBeInTheDocument()
     })

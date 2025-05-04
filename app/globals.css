@@ -192,3 +192,8 @@
     color: var(--foreground);
   }
 }
+
+input::placeholder {
+  color: #b4bcd0 !important;
+  opacity: 1;
+}

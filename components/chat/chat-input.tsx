@@ -6,7 +6,7 @@ import { useCreateConversation } from '@/hooks/use-create-conversation'
 import { useCreateMessage } from '@/hooks/use-create-message'
 import { useUser } from '@supabase/auth-helpers-react'
 import { useState, useRef } from 'react'
-import { supabase } from '@/lib/supabase/client'
+import { createSupabaseClient } from '@/lib/supabase/client'
 
 export default function ChatInput({ onOpenSearch }: { onOpenSearch?: () => void }) {
   const { activeConversationId, setActiveConversationId } = useActiveConversation()
@@ -23,6 +23,8 @@ export default function ChatInput({ onOpenSearch }: { onOpenSearch?: () => void 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const chatInputRef = useRef<HTMLInputElement>(null)
   const [pendingAttachments, setPendingAttachments] = useState<Array<{ name: string; type: string; size: number; filePath: string; url: string }>>([])
+  const supabaseRef = useRef(createSupabaseClient())
+  const supabase = supabaseRef.current
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     setUploadError(null)
@@ -168,25 +170,9 @@ export default function ChatInput({ onOpenSearch }: { onOpenSearch?: () => void 
         <input
           ref={chatInputRef}
           className="flex-1 bg-transparent border-none outline-none rounded-full px-3 py-2 text-[16px] min-h-[24px] max-h-40 transition-colors"
-          style={{
-            color: "#ececf1",
-            background: "transparent",
-            fontFamily: "var(--font-sans)",
-            fontSize: 16,
-            fontWeight: 400,
-            lineHeight: "1.5",
-            letterSpacing: "0",
-            boxShadow: "none",
-          }}
           placeholder="Ask anything"
           autoComplete="off"
         />
-        <style jsx global>{`
-          input::placeholder {
-            color: #b4bcd0 !important;
-            opacity: 1;
-          }
-        `}</style>
       </div>
       <div className="flex items-center justify-between pt-1 w-full">
         <div className="flex gap-1">
