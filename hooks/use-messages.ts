@@ -16,5 +16,9 @@ export function useMessages(conversationId?: string | null) {
       return data as Database['public']['Tables']['messages']['Row'][]
     },
     enabled: !!conversationId,
+    staleTime: 60 * 1000, // 1 minute
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    placeholderData: [],
+    refetchOnWindowFocus: false,
   })
 } 

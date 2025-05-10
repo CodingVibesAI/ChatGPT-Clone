@@ -1,3 +1,4 @@
+import React from 'react'
 import SidebarItem from './sidebar-item'
 import type { Database } from '@/types/supabase'
 
@@ -8,7 +9,7 @@ export type SidebarListProps = {
   userId?: string
 }
 
-export default function SidebarList({ grouped, userId }: SidebarListProps) {
+const SidebarList: React.FC<SidebarListProps> = React.memo(function SidebarList({ grouped, userId }) {
   return (
     <nav className="flex-1 overflow-y-auto px-2 py-2">
       {grouped.map((group) => (
@@ -25,4 +26,6 @@ export default function SidebarList({ grouped, userId }: SidebarListProps) {
       ))}
     </nav>
   )
-} 
+})
+
+export default SidebarList 

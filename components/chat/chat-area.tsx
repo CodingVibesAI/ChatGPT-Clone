@@ -1,12 +1,13 @@
 "use client";
 import ChatInput from './chat-input'
 import ChatPrompt from './chat-prompt'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import * as Tooltip from '@radix-ui/react-tooltip'
 import React from 'react'
 import { useActiveConversation } from '@/hooks/use-active-conversation'
 import { useMessages } from '@/hooks/use-messages'
 import ChatList from './chat-list'
+import { ChevronDown } from 'lucide-react'
 
 export default function ChatArea() {
   const { activeConversationId } = useActiveConversation()
@@ -17,6 +18,8 @@ export default function ChatArea() {
   const [searchTerm, setSearchTerm] = useState('')
   const [searchResults, setSearchResults] = useState<number[]>([])
   const [activeResultIdx, setActiveResultIdx] = useState(0)
+  const [isAtBottom, setIsAtBottom] = useState(true)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
 
   // Update search results when term or messages change
   useEffect(() => {
@@ -47,27 +50,65 @@ export default function ChatArea() {
     setActiveResultIdx(0)
   }
 
-  // TODO: Scroll to bottom when real messages are implemented
+  // Track scroll position to show/hide scroll-to-bottom button
   useEffect(() => {
+    if (!messages) return
+    const container = scrollContainerRef.current
+    if (!container) return
+    const handleScroll = () => {
+      const atBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100
+      setIsAtBottom(atBottom)
+    }
+    container.addEventListener('scroll', handleScroll)
+    handleScroll()
+    return () => container.removeEventListener('scroll', handleScroll)
+  }, [messages?.length])
+
+  // Provide scrollToBottomFn for the button
+  useEffect(() => {
+    setScrollToBottomFn(() => () => {
+      scrollContainerRef.current?.scrollTo({ top: scrollContainerRef.current.scrollHeight, behavior: 'smooth' })
+    })
   }, [])
-  // TODO: Don't hardcode model
+
+  const [scrollToBottomFn, setScrollToBottomFn] = useState<(() => void) | null>(null)
+
   return (
     <Tooltip.Provider>
-      <div className="relative flex flex-col flex-1 h-full w-full bg-transparent font-sans tracking-normal font-normal">
+      <div className="relative flex flex-col flex-1 h-full w-full min-h-0 bg-transparent font-sans tracking-normal font-normal">
         {activeConversationId && messages && messages.length > 0 ? (
           <>
-            <div className="flex-1 overflow-y-auto px-0 md:px-0 pt-10 pb-10">
-              <ChatList
-                messages={messages.map(m => ({
-                  id: m.id,
-                  role: m.role as 'user' | 'assistant',
-                  content: m.content,
-                }))}
-                searchTerm={searchTerm}
-                searchResults={searchResults}
-                activeResultIdx={activeResultIdx}
-              />
+            <div
+              ref={scrollContainerRef}
+              className="flex-1 min-h-0 overflow-y-auto px-0 md:px-0 pt-10 pb-10 scroll-smooth"
+              style={{ scrollBehavior: 'smooth' }}
+            >
+              {messages && (
+                <ChatList
+                  messages={messages.map(m => ({
+                    id: m.id,
+                    role: m.role as 'user' | 'assistant',
+                    content: m.content,
+                  }))}
+                  searchTerm={searchTerm}
+                  searchResults={searchResults}
+                  activeResultIdx={activeResultIdx}
+                  setScrollToBottomFn={setScrollToBottomFn}
+                />
+              )}
             </div>
+            {messages && !isAtBottom && (
+              <div className="absolute left-1/2 -translate-x-1/2 bottom-[120px] z-[9999] pointer-events-none w-full flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => scrollToBottomFn && scrollToBottomFn()}
+                  className="bg-[#23272f] border border-[#353740] shadow-lg rounded-full w-10 h-10 flex items-center justify-center text-white hover:bg-[#353740] transition pointer-events-auto"
+                  aria-label="Scroll to bottom"
+                >
+                  <ChevronDown className="w-7 h-7" />
+                </button>
+              </div>
+            )}
             <div className="w-full max-w-2xl px-4 mx-auto pb-6">
               <ChatInput
                 onOpenSearch={() => setIsSearchOpen(true)}

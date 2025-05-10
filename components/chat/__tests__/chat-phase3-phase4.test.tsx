@@ -1,6 +1,6 @@
 // Mock ESM-only markdown deps for Jest logic tests
 import React from 'react'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import { vi, describe, it, expect } from 'vitest'
 import '@testing-library/jest-dom'
 import ChatArea from '../chat-area'
@@ -89,9 +89,11 @@ describe('Chat Phase 3 & 4', () => {
     const uploadBtn = screen.getAllByRole('button').find(btn => btn.innerHTML.includes('upload'))
     fireEvent.click(uploadBtn as HTMLElement)
     // Simulate file input change
-    const fileInput = screen.getByLabelText('Upload file') || document.querySelector('input[type="file"]')
+    const fileInput = document.querySelector('input[type="file"]')
     const file = new File(['hello'], 'hello.png', { type: 'image/png' })
-    fireEvent.change(fileInput as HTMLInputElement, { target: { files: [file] } })
+    await act(async () => {
+      fireEvent.change(fileInput as HTMLInputElement, { target: { files: [file] } })
+    })
     // Should not throw
   })
 
@@ -103,5 +105,68 @@ describe('Chat Phase 3 & 4', () => {
     fireEvent.change(searchInput, { target: { value: 'hello' } })
     expect(searchInput).toHaveValue('hello')
     // No error = pass
+  })
+
+  it('shows file preview instantly and updates status', async () => {
+    render(<ChatArea />)
+    const uploadBtn = screen.getAllByRole('button').find(btn => btn.innerHTML.includes('upload'))
+    fireEvent.click(uploadBtn as HTMLElement)
+    const fileInput = document.querySelector('input[type="file"]')
+    const file = new File(['hello'], 'hello.png', { type: 'image/png' })
+    fireEvent.change(fileInput as HTMLInputElement, { target: { files: [file] } })
+    // Debug DOM
+    screen.debug()
+    // Preview should appear instantly
+    await waitFor(() => screen.getByTestId('attachment-filename'))
+    expect(screen.getByTestId('attachment-filename').textContent).toContain('hello.png')
+    // Should show the file name
+    expect(screen.getByTestId('attachment-filename').textContent).toContain('hello.png')
+    // Remove the file
+    const removeBtn = screen.getAllByRole('button').find(
+      btn => btn.getAttribute('aria-label') === 'Remove attachment'
+    )
+    fireEvent.click(removeBtn as HTMLElement)
+    await waitFor(() => expect(screen.queryByTestId('attachment-filename')).not.toBeInTheDocument())
+  })
+
+  it('shows error icon if upload fails', async () => {
+    // Patch upload to fail
+    const uploadMock = vi.fn().mockResolvedValue({ error: { message: 'fail' } })
+    const getPublicUrlMock = vi.fn(() => ({ data: { publicUrl: 'url' } }))
+    // Patch global Supabase client mock
+    vi.mock('@/lib/supabase/client', () => ({
+      createSupabaseClient: () => ({
+        from: vi.fn(() => ({
+          insert: vi.fn().mockResolvedValue({}),
+          select: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({}),
+          eq: vi.fn().mockReturnThis(),
+          order: vi.fn().mockReturnThis(),
+        })),
+        storage: {
+          from: vi.fn(() => ({
+            upload: uploadMock,
+            getPublicUrl: getPublicUrlMock,
+          }))
+        }
+      })
+    }))
+    render(<ChatArea />)
+    const uploadBtn = screen.getAllByRole('button').find(btn => btn.innerHTML.includes('upload'))
+    fireEvent.click(uploadBtn as HTMLElement)
+    const fileInput = document.querySelector('input[type="file"]')
+    const file = new File(['fail'], 'fail.txt', { type: 'text/plain' })
+    await act(async () => {
+      fireEvent.change(fileInput as HTMLInputElement, { target: { files: [file] } })
+    })
+    // Preview should appear instantly
+    // Debug DOM
+    screen.debug()
+    await waitFor(() => screen.getByTestId('attachment-filename'))
+    expect(screen.getByTestId('attachment-filename').textContent).toContain('fail.txt')
+    // Wait for error icon
+    await waitFor(() => expect(screen.getByText('!')).toBeInTheDocument())
+    // Should show the file name
+    expect(screen.getByTestId('attachment-filename').textContent).toContain('fail.txt')
   })
 }) 

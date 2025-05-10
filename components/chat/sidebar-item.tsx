@@ -1,13 +1,14 @@
+import React, { useState, useRef, useEffect } from 'react'
 import { MessageSquare, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import { useActiveConversation } from '@/hooks/use-active-conversation'
 import { useDeleteConversation } from '@/hooks/use-delete-conversation'
 import { useUpdateConversation } from '@/hooks/use-update-conversation'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
-import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 
 type SidebarItemProps = { conv: { id: string, title: string }, userId?: string }
-export default function SidebarItem({ conv, userId }: SidebarItemProps) {
+
+const SidebarItem = React.memo(function SidebarItem({ conv, userId }: SidebarItemProps) {
   const setActiveConversationId = useActiveConversation(s => s.setActiveConversationId)
   const [menuOpen, setMenuOpen] = useState(false)
   const [isRenaming, setIsRenaming] = useState(false)
@@ -30,7 +31,6 @@ export default function SidebarItem({ conv, userId }: SidebarItemProps) {
     if (!isRenaming) setRenameValue(conv.title)
   }, [conv.title, isRenaming])
   const handleRename = () => {
-    console.log('handleRename called')
     setMenuOpen(false)
     setTimeout(() => {
       setIsRenaming(true)
@@ -111,4 +111,6 @@ export default function SidebarItem({ conv, userId }: SidebarItemProps) {
       </div>
     </li>
   )
-} 
+})
+
+export default SidebarItem 
