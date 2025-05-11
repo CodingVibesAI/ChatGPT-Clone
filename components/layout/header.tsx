@@ -73,12 +73,7 @@ export default function Header() {
       )
     }
     if (selectedModel) {
-      const idx = list.findIndex(m => m.name === selectedModel)
-      if (idx > 0) {
-        // Move selected model to the top
-        const [sel] = list.splice(idx, 1)
-        list = [sel, ...list]
-      }
+      list = [...list].sort((a, b) => (a.name === selectedModel ? -1 : b.name === selectedModel ? 1 : 0));
     }
     return list
   }, [models, debouncedSearch, selectedModel])

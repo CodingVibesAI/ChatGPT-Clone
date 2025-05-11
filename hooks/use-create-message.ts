@@ -73,4 +73,12 @@ export function useCreateMessage(options?: UseMutationOptions<
     },
     ...options,
   })
+}
+
+export async function updateMessage(id: string, content: string) {
+  const { error } = await supabase
+    .from('messages')
+    .update({ content })
+    .eq('id', id)
+  if (error) throw error
 } 

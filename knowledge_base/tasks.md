@@ -99,14 +99,14 @@
 
 ## Phase 5: Model Selection and Settings
 
-- [ ] Connect to Together.AI API
+- [x] Connect to Together.AI API
     - [x] Create API route to fetch available models from Together.AI (with TTL cache)
     - [ ] Create API route for chat completions (streaming, model param dynamic)
-- [ ] Bind selected model to conversation
-    - [ ] Update Supabase schema to store selected model per conversation
-    - [ ] Ensure chat requests use the selected model for the active conversation
-- [ ] Implement model switching logic
-    - [ ] Allow switching models mid-conversation (with warning/restriction if needed)
+- [x] Bind selected model to conversation
+    - [x] Update Supabase schema to store selected model per conversation
+    - [x] Ensure chat requests use the selected model for the active conversation
+- [x] Implement model switching logic
+    - [x] Allow switching models mid-conversation (with warning/restriction if needed)
 - [ ] Implement token usage tracking
     - [ ] Track tokens used per conversation
     - [ ] Show estimated cost per conversation

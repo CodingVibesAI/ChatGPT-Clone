@@ -6,9 +6,9 @@ import { useUpdateConversation } from '@/hooks/use-update-conversation'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { Button } from '@/components/ui/button'
 
-type SidebarItemProps = { conv: { id: string, title: string }, userId?: string }
+type SidebarItemProps = { conv: { id: string, title: string }, userId?: string, isActive?: boolean }
 
-const SidebarItem = React.memo(function SidebarItem({ conv, userId }: SidebarItemProps) {
+const SidebarItem = React.memo(function SidebarItem({ conv, userId, isActive }: SidebarItemProps) {
   const setActiveConversationId = useActiveConversation(s => s.setActiveConversationId)
   const [menuOpen, setMenuOpen] = useState(false)
   const [isRenaming, setIsRenaming] = useState(false)
@@ -54,7 +54,7 @@ const SidebarItem = React.memo(function SidebarItem({ conv, userId }: SidebarIte
   }
   return (
     <li>
-      <div className={`group flex items-center w-full rounded-md transition-colors ${menuOpen ? 'bg-[#343541]' : 'hover:bg-[#343541]'}`}>
+      <div className={`group flex items-center w-full rounded-md transition-colors ${isActive ? 'bg-[#40414f] font-bold' : menuOpen ? 'bg-[#343541]' : 'hover:bg-[#343541]'}`}>
         {isRenaming ? (
           <input
             ref={inputRef}

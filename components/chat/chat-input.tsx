@@ -1,12 +1,34 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { LucideSend, Globe, Image as ImageIcon, Search, MoreHorizontal, Upload } from 'lucide-react'
 import * as Tooltip from '@radix-ui/react-tooltip'
 import { useActiveConversation } from '@/hooks/use-active-conversation'
 import { useCreateConversation } from '@/hooks/use-create-conversation'
-import { useCreateMessage } from '@/hooks/use-create-message'
+import { useCreateMessage, updateMessage } from '@/hooks/use-create-message'
 import { useUser } from '@supabase/auth-helpers-react'
-import { createSupabaseClient } from '@/lib/supabase/client'
+import { supabase } from '@/lib/supabase/client'
+import { ChatCompletionStream } from "together-ai/lib/ChatCompletionStream";
+import { useMessages } from '@/hooks/use-messages';
+import { useQueryClient } from '@tanstack/react-query';
+import type { Database } from '@/types/supabase';
+import { useConversationModel } from '@/hooks/use-conversation-model';
+
+console.log('ChatInput mounted');
+
+type PendingMessage = {
+  content: string;
+  attachments: Array<{
+    name: string;
+    type: string;
+    size: number;
+    filePath: string;
+    url: string;
+    status: 'pending' | 'uploaded' | 'error';
+    error?: string;
+  }>;
+  model: string | null;
+  messages: { role: string; content: string }[];
+};
 
 const ChatInput = React.memo(function ChatInput({ onOpenSearch, defaultModel }: { onOpenSearch?: () => void, defaultModel?: string }) {
   const activeConversationId = useActiveConversation(s => s.activeConversationId)
@@ -33,9 +55,12 @@ const ChatInput = React.memo(function ChatInput({ onOpenSearch, defaultModel }: 
     status: 'pending' | 'uploaded' | 'error';
     error?: string;
   }>>([])
-  const supabaseRef = useRef(createSupabaseClient())
-  const supabase = supabaseRef.current
   const [, forceRerender] = useState(0)
+  const { data: messages } = useMessages(activeConversationId);
+  const queryClient = useQueryClient();
+  const { model: selectedModel } = useConversationModel(activeConversationId, defaultModel);
+  const pendingQueue = useRef<PendingMessage[]>([]);
+  const [pendingMessages, setPendingMessages] = useState<PendingMessage[]>([]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     console.log('handleFileChange', e.target.files)
@@ -111,6 +136,44 @@ const ChatInput = React.memo(function ChatInput({ onOpenSearch, defaultModel }: 
     setPendingAttachments(prev => prev.filter(a => a.filePath !== filePath))
   }
 
+  useEffect(() => {
+    if (activeConversationId && !activeConversationId.startsWith('temp-') && pendingQueue.current.length > 0) {
+      // Flush all queued messages
+      pendingQueue.current.forEach(async (item) => {
+        const msg = await createMessage.mutateAsync({ conversation_id: activeConversationId, content: item.content, role: 'user' });
+        for (const att of item.attachments) {
+          await supabase.from('attachments').insert({
+            file_name: att.name,
+            file_path: att.filePath,
+            file_size: att.size,
+            file_type: att.type,
+            message_id: msg.id,
+          });
+        }
+        const assistantMsg = await createMessage.mutateAsync({ conversation_id: activeConversationId, content: '', role: 'assistant' });
+        const imageUrls = item.attachments.filter((att: { type: string }) => att.type.startsWith('image/')).map((att: { url: string }) => att.url);
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          body: JSON.stringify({ messages: item.messages, conversation_id: activeConversationId, model: item.model, attachments: imageUrls }),
+        });
+        if (res.body) {
+          ChatCompletionStream.fromReadableStream(res.body)
+            .on('content', (delta, content) => {
+              updateMessage(assistantMsg.id, content).catch(() => {});
+              queryClient.setQueryData<Database['public']['Tables']['messages']['Row'][]>(['messages', activeConversationId], (old) => {
+                if (!old) return old;
+                return old.map((m) =>
+                  m.id === assistantMsg.id ? { ...m, content } : m
+                );
+              });
+            });
+        }
+      });
+      pendingQueue.current = [];
+      setPendingMessages([]);
+    }
+  }, [activeConversationId]);
+
   return (
     <form
       className="w-full max-w-[700px] mx-auto relative flex flex-col gap-0"
@@ -125,10 +188,14 @@ const ChatInput = React.memo(function ChatInput({ onOpenSearch, defaultModel }: 
         fontSize: 16,
       }}
       onSubmit={async e => {
+        console.log('Form submitted');
         e.preventDefault();
         setError(null)
         const content = inputValue.trim()
-        if (!content && pendingAttachments.length === 0) return
+        if (!content && pendingAttachments.length === 0) {
+          console.log('No content or attachments, returning early');
+          return;
+        }
         try {
           let conversationId = activeConversationId
           if (!conversationId) {
@@ -136,12 +203,46 @@ const ChatInput = React.memo(function ChatInput({ onOpenSearch, defaultModel }: 
               const conv = await createConversation.mutateAsync({ user_id: userId, model: defaultModel || '' })
               setActiveConversationId(conv.id)
               conversationId = conv.id
+              // Wait for the real conversation ID before proceeding
+              if (!conversationId || conversationId.startsWith('temp-')) {
+                // Queue the message and attachments
+                pendingQueue.current.push({
+                  content,
+                  attachments: [...pendingAttachments],
+                  model: selectedModel,
+                  messages: [
+                    ...(messages?.map((m: { role: string; content: string }) => ({ role: m.role, content: m.content })) || []),
+                    { role: 'user', content }
+                  ],
+                });
+                setPendingMessages([
+                  ...pendingMessages,
+                  {
+                    content,
+                    attachments: [...pendingAttachments],
+                    model: selectedModel,
+                    messages: [
+                      ...(messages?.map((m: { role: string; content: string }) => ({ role: m.role, content: m.content })) || []),
+                      { role: 'user', content }
+                    ],
+                  },
+                ]);
+                setInputValue('');
+                setPendingAttachments([]);
+                return;
+              }
             } else {
               setError('No conversation available')
+              console.log('No conversation available, returning early');
               return
             }
           }
-          // Create the message
+          // Only proceed if conversationId is a real UUID
+          if (!conversationId || conversationId.startsWith('temp-')) {
+            setError('Invalid conversation. Please try again.');
+            return;
+          }
+          // Create the user message
           const msg = await createMessage.mutateAsync({ conversation_id: conversationId, content, role: 'user' })
           // Insert all pending attachments
           for (const att of pendingAttachments) {
@@ -155,6 +256,52 @@ const ChatInput = React.memo(function ChatInput({ onOpenSearch, defaultModel }: 
           }
           setInputValue('')
           setPendingAttachments([])
+          // Use the latest messages (including the new user message)
+          const currentMessages = [
+            ...(messages?.map(m => ({ role: m.role, content: m.content })) || []),
+            { role: 'user', content }
+          ];
+          // Add a placeholder assistant message
+          console.log('Creating assistant message...');
+          const assistantMsg = await createMessage.mutateAsync({ conversation_id: conversationId, content: '', role: 'assistant' });
+          console.log('Assistant message created:', assistantMsg);
+          let streamedContent = '';
+          let res;
+          const imageUrls = pendingAttachments
+            .filter((att: { type: string }) => att.type.startsWith('image/'))
+            .map((att: { url: string }) => att.url);
+          try {
+            res = await fetch('/api/chat', {
+              method: 'POST',
+              body: JSON.stringify({ messages: currentMessages, conversation_id: conversationId, model: selectedModel, attachments: imageUrls }),
+            });
+            console.log('API response:', res);
+          } catch (err) {
+            console.error('Fetch to /api/chat failed:', err);
+            setError('Failed to contact LLM API');
+            return;
+          }
+          if (!res.body) throw new Error('No response body');
+          if (res.body) {
+            ChatCompletionStream.fromReadableStream(res.body)
+              .on('content', (delta, content) => {
+                streamedContent = content;
+                console.log('Streaming content:', content);
+                updateMessage(assistantMsg.id, streamedContent).catch(e => {
+                  console.error('updateMessage error:', e);
+                });
+                queryClient.setQueryData<Database['public']['Tables']['messages']['Row'][]>(['messages', conversationId], (old) => {
+                  if (!old) return old;
+                  return old.map((m) =>
+                    m.id === assistantMsg.id ? { ...m, content: streamedContent } : m
+                  );
+                });
+              })
+              .on('end', () => {
+                console.log('Streaming ended');
+                // No refetch; rely on optimistic cache update
+              });
+          }
         } catch (err: unknown) {
           if (typeof err === 'object' && err !== null && 'message' in err && typeof (err as { message?: unknown }).message === 'string') {
             setError((err as { message: string }).message)

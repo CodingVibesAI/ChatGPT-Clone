@@ -1,5 +1,6 @@
 import ChatMessage from './chat-message'
 import React, { useEffect, useRef } from 'react'
+import { Loader2 } from 'lucide-react'
 
 type ChatListProps = {
   messages: { id: string; role: 'user' | 'assistant'; content: string }[]
@@ -37,20 +38,20 @@ export default function ChatList({ messages, searchTerm, searchResults, activeRe
     <div ref={containerRef} className="w-full max-w-3xl mx-auto flex flex-col gap-4 relative">
       {messages.map((msg, idx) => (
         <React.Fragment key={msg.id}>
+          {idx > 0 && messages[idx].role === 'user' && (
+            <div className="w-full h-px bg-[#353740] my-2 opacity-50" />
+          )}
           <div
             ref={el => { msgRefs.current[idx] = el }}
             className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             <ChatMessage
               role={msg.role}
-              content={msg.content}
+              content={msg.content || (msg.role === 'assistant' ? <span className="flex items-center gap-2 text-[#b4bcd0]"><Loader2 className="animate-spin w-4 h-4" /> Generating...</span> : '')}
               highlight={!!searchTerm && activeIdx === idx}
               searchTerm={searchTerm}
             />
           </div>
-          {idx < messages.length - 1 && (
-            <div className="w-full h-px bg-[#353740] my-2 opacity-50" />
-          )}
         </React.Fragment>
       ))}
       <div ref={endRef} />

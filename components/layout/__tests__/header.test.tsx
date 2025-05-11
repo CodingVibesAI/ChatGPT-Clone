@@ -70,4 +70,28 @@ describe('Header model dropdown', () => {
     const items = screen.getAllByRole('option')
     expect(items[0].textContent?.toLowerCase()).toContain('mistral')
   })
+
+  it('all models remain in the dropdown after multiple selections', async () => {
+    render(<Header />)
+    // Open and select Mistral
+    fireEvent.click(screen.getByRole('button', { name: /deepseek/i }))
+    const mistralBtn = screen.getAllByRole('option').find(btn =>
+      btn.textContent?.toLowerCase().includes('mistral')
+    )
+    expect(mistralBtn).toBeTruthy()
+    fireEvent.click(mistralBtn!)
+    // Open and select Claude
+    fireEvent.click(screen.getByRole('button', { name: /mistral/i }))
+    const claudeBtn = screen.getAllByRole('option').find(btn =>
+      btn.textContent?.toLowerCase().includes('claude')
+    )
+    expect(claudeBtn).toBeTruthy()
+    fireEvent.click(claudeBtn!)
+    // Open again, all models should be present
+    fireEvent.click(screen.getByRole('button', { name: /claude/i }))
+    const items = screen.getAllByRole('option').map(btn => btn.textContent?.toLowerCase())
+    expect(items.some(text => text?.includes('deepseek'))).toBe(true)
+    expect(items.some(text => text?.includes('mistral'))).toBe(true)
+    expect(items.some(text => text?.includes('claude'))).toBe(true)
+  })
 }) 
