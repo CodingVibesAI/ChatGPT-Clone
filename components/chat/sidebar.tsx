@@ -10,6 +10,9 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { useCreateConversation } from '@/hooks/use-create-conversation'
 import { useActiveConversation } from '@/hooks/use-active-conversation'
+import useSWR from 'swr'
+
+const fetcher = (url: string) => fetch(url).then(res => res.json())
 
 function groupConversations(convs: Conversation[]): { label: string, items: Conversation[] }[] {
   const now = new Date()
@@ -33,7 +36,7 @@ function groupConversations(convs: Conversation[]): { label: string, items: Conv
   ]
 }
 
-function MiniSidebar({ setOpen, userId }: { setOpen: (open: boolean) => void, userId?: string }) {
+function MiniSidebar({ setOpen, userId, defaultModel }: { setOpen: (open: boolean) => void, userId?: string, defaultModel?: string }) {
   const setActiveConversationId = useActiveConversation(s => s.setActiveConversationId)
   const createConversation = useCreateConversation({
     onSuccess: (data) => {
@@ -53,7 +56,7 @@ function MiniSidebar({ setOpen, userId }: { setOpen: (open: boolean) => void, us
         className="w-10 h-10 flex items-center justify-center text-[#ececf1] hover:bg-[#343541] rounded-lg"
         onClick={() => {
           if (userId && !createConversation.isPending) {
-            createConversation.mutate({ user_id: userId, model: 'GPT-4o' })
+            createConversation.mutate({ user_id: userId, model: defaultModel || '' })
           }
         }}
         aria-label="New chat"
@@ -69,6 +72,8 @@ export default function Sidebar({ open, setOpen }: { open: boolean, setOpen: (op
   const user = useUser()
   const userId = user?.id
   const { data, isLoading, isError } = useConversations(userId)
+  const { data: models } = useSWR('/api/models', fetcher)
+  const defaultModel = models?.[0]?.name
   // Filter conversations by search
   const filtered = (data || []).filter(c =>
     c.title.toLowerCase().includes(search.toLowerCase())
@@ -82,7 +87,7 @@ export default function Sidebar({ open, setOpen }: { open: boolean, setOpen: (op
     >
       {open ? (
         <>
-          <SidebarHeader open={open} setOpen={setOpen} userId={userId} />
+          <SidebarHeader open={open} setOpen={setOpen} userId={userId} defaultModel={defaultModel} />
           {/* Search input always visible */}
           <div className="px-2 pb-2">
             <input
@@ -113,7 +118,7 @@ export default function Sidebar({ open, setOpen }: { open: boolean, setOpen: (op
           <SidebarFooter />
         </>
       ) : (
-        <MiniSidebar setOpen={setOpen} userId={userId} />
+        <MiniSidebar setOpen={setOpen} userId={userId} defaultModel={defaultModel} />
       )}
     </aside>
   )

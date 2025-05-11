@@ -98,18 +98,24 @@
 - [x] Add file size limits and validation
 
 ## Phase 5: Model Selection and Settings
+
 - [ ] Connect to Together.AI API
-- [ ] Create model selection component based on Together.AI API
+    - [x] Create API route to fetch available models from Together.AI (with TTL cache)
+    - [ ] Create API route for chat completions (streaming, model param dynamic)
+- [ ] Bind selected model to conversation
+    - [ ] Update Supabase schema to store selected model per conversation
+    - [ ] Ensure chat requests use the selected model for the active conversation
 - [ ] Implement model switching logic
-- [ ] Add model-specific settings
+    - [ ] Allow switching models mid-conversation (with warning/restriction if needed)
 - [ ] Implement token usage tracking
+    - [ ] Track tokens used per conversation
+    - [ ] Show estimated cost per conversation
 - [ ] Create cost estimation component
-- [ ] Add model preference persistence
 
 ## Phase 6: User Settings and Preferences
 
 - [ ] Create settings page
-- [ ] Implement theme switching
+- [ ] Allow user to store their together.ai api key and use it for requests
 - [ ] Add message history preferences
 - [ ] Create notification settings
 - [ ] Implement settings persistence

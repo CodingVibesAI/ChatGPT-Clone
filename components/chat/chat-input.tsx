@@ -8,7 +8,7 @@ import { useCreateMessage } from '@/hooks/use-create-message'
 import { useUser } from '@supabase/auth-helpers-react'
 import { createSupabaseClient } from '@/lib/supabase/client'
 
-const ChatInput = React.memo(function ChatInput({ onOpenSearch }: { onOpenSearch?: () => void }) {
+const ChatInput = React.memo(function ChatInput({ onOpenSearch, defaultModel }: { onOpenSearch?: () => void, defaultModel?: string }) {
   const activeConversationId = useActiveConversation(s => s.activeConversationId)
   const setActiveConversationId = useActiveConversation(s => s.setActiveConversationId)
   const user = useUser()
@@ -133,7 +133,7 @@ const ChatInput = React.memo(function ChatInput({ onOpenSearch }: { onOpenSearch
           let conversationId = activeConversationId
           if (!conversationId) {
             if (userId && !createConversation.isPending) {
-              const conv = await createConversation.mutateAsync({ user_id: userId, model: 'GPT-4o' })
+              const conv = await createConversation.mutateAsync({ user_id: userId, model: defaultModel || '' })
               setActiveConversationId(conv.id)
               conversationId = conv.id
             } else {

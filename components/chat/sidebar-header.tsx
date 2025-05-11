@@ -2,7 +2,7 @@ import { LucidePlus, Menu } from 'lucide-react'
 import { useCreateConversation } from '@/hooks/use-create-conversation'
 import { useActiveConversation } from '@/hooks/use-active-conversation'
 
-export default function SidebarHeader({ open, setOpen, userId }: { open: boolean, setOpen: (open: boolean) => void, userId?: string }) {
+export default function SidebarHeader({ open, setOpen, userId, defaultModel }: { open: boolean, setOpen: (open: boolean) => void, userId?: string, defaultModel?: string }) {
   const setActiveConversationId = useActiveConversation(s => s.setActiveConversationId)
   const createConversation = useCreateConversation({
     onSuccess: (data) => {
@@ -23,7 +23,7 @@ export default function SidebarHeader({ open, setOpen, userId }: { open: boolean
           className="w-10 h-10 flex items-center justify-center text-[#ececf1] hover:bg-[#343541] rounded-lg"
           onClick={() => {
             if (userId && !createConversation.isPending) {
-              createConversation.mutate({ user_id: userId, model: 'GPT-4o' })
+              createConversation.mutate({ user_id: userId, model: defaultModel || 'ssss' })
             }
           }}
           aria-label="New chat"

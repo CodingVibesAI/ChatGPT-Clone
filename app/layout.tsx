@@ -12,6 +12,8 @@ export const metadata: Metadata = {
   description: 'A ChatGPT clone built with Next.js and Supabase',
 }
 
+// PHASE 5: Together.AI model selection and chat integration in progress
+
 export default function RootLayout({
   children,
 }: {

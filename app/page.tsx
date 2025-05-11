@@ -5,8 +5,11 @@ import Header from '@/components/layout/header'
 import Footer from '@/components/layout/footer'
 import { useState } from 'react'
 
+// PHASE 5: Together.AI model selection and chat integration in progress
+
 export default function ChatPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [selectedModel, setSelectedModel] = useState<string | null>(null)
 
   return (
     <div className="flex h-screen w-full bg-gradient-to-b from-[#23272f] via-[#202123] to-[#131313] relative">
@@ -15,7 +18,7 @@ export default function ChatPage() {
         <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
       </div>
       <main className="flex-1 min-w-0 flex flex-col h-screen">
-        <Header />
+        <Header selectedModel={selectedModel} setSelectedModel={setSelectedModel} />
         <div className="flex-1 min-h-0 flex flex-col">
           <ChatArea />
         </div>
