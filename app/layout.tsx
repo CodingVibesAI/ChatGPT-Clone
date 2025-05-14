@@ -4,6 +4,7 @@ import { Inter } from 'next/font/google'
 import { ReactNode } from 'react'
 import QueryClientProviderWrapper from '@/components/providers/query-client-provider'
 import SessionProvider from '@/components/providers/session-provider'
+import { ToastProvider } from '@/components/providers/toast-provider'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -24,6 +25,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <SessionProvider>
           <QueryClientProviderWrapper>
+            <ToastProvider />
             {children}
           </QueryClientProviderWrapper>
         </SessionProvider>

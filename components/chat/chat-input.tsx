@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { LucideSend, Globe, Image as ImageIcon, Search, MoreHorizontal, Upload } from 'lucide-react'
+import { LucideSend, Search, Upload } from 'lucide-react'
 import * as Tooltip from '@radix-ui/react-tooltip'
 import { useActiveConversation } from '@/hooks/use-active-conversation'
 import { useCreateConversation } from '@/hooks/use-create-conversation'
@@ -14,6 +14,7 @@ import type { Database } from '@/types/supabase';
 import { useConversationModelStore } from '@/hooks/use-conversation-model-store'
 import { createPortal } from 'react-dom'
 import { usePremiumQueryCountStore } from '@/hooks/use-premium-query-count-store'
+import { toast } from 'react-hot-toast'
 
 console.log('ChatInput mounted');
 
@@ -225,6 +226,7 @@ const ChatInput = React.memo(function ChatInput({ onOpenSearch, defaultModel }: 
               })
               if (res.status === 403) {
                 setShowLimitModal(true)
+                toast.error('You have hit your daily premium query limit. Add your own API key in Settings for unlimited access.')
                 return
               }
               decrementPremiumCount()
@@ -316,9 +318,13 @@ const ChatInput = React.memo(function ChatInput({ onOpenSearch, defaultModel }: 
             } catch (err) {
               console.error('Fetch to /api/chat failed:', err);
               setError('Failed to contact LLM API');
+              toast.error('Failed to contact Together.AI. Please try again later.')
               return;
             }
-            if (!res.body) throw new Error('No response body');
+            if (!res.body) {
+              toast.error('No response from Together.AI. Please try again later.')
+              throw new Error('No response body');
+            }
             if (res.body) {
               ChatCompletionStream.fromReadableStream(res.body)
                 .on('content', (delta, content) => {

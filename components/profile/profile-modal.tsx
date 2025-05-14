@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { supabase } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { toast } from 'react-hot-toast'
 
 interface ProfileModalProps {
   open: boolean
@@ -25,6 +26,7 @@ export default function ProfileModal({ open, onClose }: ProfileModalProps) {
       setError(null)
       const { data: { user }, error: userError } = await supabase.auth.getUser()
       if (userError || !user) {
+        toast.error(userError?.message || 'Auth error. Please sign in again.')
         router.replace('/sign-in')
         return
       }
@@ -34,7 +36,10 @@ export default function ProfileModal({ open, onClose }: ProfileModalProps) {
         .eq('id', user.id)
         .single()
       if (!ignore) {
-        if (profileError) setError(profileError.message)
+        if (profileError) {
+          setError(profileError.message)
+          toast.error(profileError.message)
+        }
         else {
           setProfile({
             email: data?.email || '',
@@ -58,14 +63,25 @@ export default function ProfileModal({ open, onClose }: ProfileModalProps) {
       .from('users')
       .update({ full_name: fullName })
       .eq('id', user?.id || '')
-    if (updateError) setError(updateError.message)
+    if (updateError) {
+      setError(updateError.message)
+      toast.error(updateError.message)
+    }
     else setSuccess('Profile updated!')
     setLoading(false)
   }
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
-    router.replace('/sign-in')
+    try {
+      await supabase.auth.signOut()
+      router.replace('/sign-in')
+    } catch (err: unknown) {
+      if (err && typeof err === 'object' && 'message' in err && typeof (err as { message?: unknown }).message === 'string') {
+        toast.error((err as { message: string }).message)
+      } else {
+        toast.error('Logout failed')
+      }
+    }
   }
 
   const handleDelete = async () => {
@@ -75,7 +91,10 @@ export default function ProfileModal({ open, onClose }: ProfileModalProps) {
     const { data: { user } } = await supabase.auth.getUser()
     // You should use a secure API route for this in production
     const { error: deleteError } = await supabase.from('users').delete().eq('id', user?.id || '')
-    if (deleteError) setError(deleteError.message)
+    if (deleteError) {
+      setError(deleteError.message)
+      toast.error(deleteError.message)
+    }
     else {
       await supabase.auth.signOut()
       router.replace('/sign-up')
