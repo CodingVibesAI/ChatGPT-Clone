@@ -18,12 +18,10 @@ export default async function AuthLayout({
   }
 
   return (
-    <html lang="en" className="dark">
-      <body className={inter.className + ' min-h-screen flex items-center justify-center bg-background dark:bg-[#18181b] dark:text-[#ececf1]'}>
-        <div className="w-full max-w-[400px] mx-auto p-4 space-y-4">
-          {children}
-        </div>
-      </body>
-    </html>
+    <div className={inter.className + ' min-h-screen flex items-center justify-center bg-[#18181b] text-[#ececf1]'}>
+      <div className="w-full max-w-[400px] mx-auto p-4 space-y-4">
+        {children}
+      </div>
+    </div>
   )
 } 

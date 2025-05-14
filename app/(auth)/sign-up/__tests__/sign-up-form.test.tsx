@@ -54,10 +54,9 @@ describe('SignUpForm', () => {
   it('handles successful sign up', async () => {
     signUp.mockResolvedValue({ error: null })
     getUser.mockResolvedValue({ data: { user: { id: '123' } } })
-    insert.mockResolvedValue({ error: null })
     mockCreateClientImpl = () => ({
       auth: { signUp, getUser },
-      from: () => ({ insert }),
+      from: () => ({}),
     })
     const { SignUpForm } = await import('@/components/auth/sign-up-form')
     const user = userEvent.setup()
@@ -77,7 +76,6 @@ describe('SignUpForm', () => {
           },
         },
       })
-      expect(insert).toHaveBeenCalled()
     })
   })
 

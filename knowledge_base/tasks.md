@@ -59,16 +59,16 @@
 ### 3.2 Conversation CRUD Operations
 - [x] Implement create conversation (New Chat button and chat input)
 - [x] Implement delete conversation (context menu)
-- [ ] Fix: Conversation rename (inline) should persist and update UI correctly (currently buggy)
+- [x] Fix: Conversation rename (inline) should persist and update UI correctly (currently buggy)
 - [x] Implement optimistic UI updates for CRUD actions
 - [x] Add error handling and rollback for failed operations
 - [x] Clear active conversation if deleted
 
 ### 3.3 Conversation Search & Filter
-- [ ] Add search input to sidebar
-- [ ] Implement client-side search/filtering of conversations
-- [ ] (Optional) Implement server-side search for large lists
-- [ ] Add filter options (e.g., by date, favorites, etc.)
+- [x] Add search input to sidebar
+- [x] Implement client-side search/filtering of conversations
+- [x] (Optional) Implement server-side search for large lists
+- [x] Add filter options (e.g., by date, favorites, etc.)
 
 ### 3.4 State Management & Real-Time
 - [x] Use Zustand store for active conversation (global, no prop drilling)
@@ -101,7 +101,7 @@
 
 - [x] Connect to Together.AI API
     - [x] Create API route to fetch available models from Together.AI (with TTL cache)
-    - [ ] Create API route for chat completions (streaming, model param dynamic)
+    - [x] Create API route for chat completions (streaming, model param dynamic)
 - [x] Bind selected model to conversation
     - [x] Update Supabase schema to store selected model per conversation
     - [x] Ensure chat requests use the selected model for the active conversation

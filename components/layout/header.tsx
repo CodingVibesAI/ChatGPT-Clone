@@ -6,6 +6,8 @@ import useSWR from 'swr'
 import { createPortal } from 'react-dom'
 import { useActiveConversation } from '@/hooks/use-active-conversation'
 import { useConversationModelStore } from '@/hooks/use-conversation-model-store'
+import SettingsModal from '@/components/settings/settings-modal'
+import ProfileModal from '@/components/profile/profile-modal'
 
 const fetcher = (url: string) => fetch(url).then(res => res.json())
 
@@ -24,6 +26,8 @@ export default function Header() {
   const [search, setSearch] = useState('')
   const debouncedSearch = useMemo(() => search, [search])
   const searchInputRef = useRef<HTMLInputElement>(null)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)
 
   // Get active conversation
   const activeConversationId = useActiveConversation(s => s.activeConversationId)
@@ -192,9 +196,11 @@ export default function Header() {
       </div>
       <div className="flex items-center gap-1">
         <button className="p-1.5 rounded-full hover:bg-[#353740] transition-colors text-[#b4bcd0]" aria-label="Share"><Share2 size={20} /></button>
-        <button className="p-1.5 rounded-full hover:bg-[#353740] transition-colors text-[#b4bcd0]" aria-label="Settings"><Settings size={20} /></button>
-        <button className="p-1.5 rounded-full hover:bg-[#353740] transition-colors text-[#b4bcd0]" aria-label="Profile"><User size={20} /></button>
+        <button className="p-1.5 rounded-full hover:bg-[#353740] transition-colors text-[#b4bcd0]" aria-label="Settings" onClick={() => setSettingsOpen(true)}><Settings size={20} /></button>
+        <button className="p-1.5 rounded-full hover:bg-[#353740] transition-colors text-[#b4bcd0]" aria-label="Profile" onClick={() => { setDropdownOpen(false); setSettingsOpen(false); setProfileOpen(true) }}><User size={20} /></button>
       </div>
+      {settingsOpen && <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />}
+      {profileOpen && <ProfileModal open={profileOpen} onClose={() => setProfileOpen(false)} />}
     </header>
   )
 } 

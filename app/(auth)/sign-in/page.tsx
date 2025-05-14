@@ -10,10 +10,10 @@ export const metadata: Metadata = {
 
 export default function SignInPage() {
   return (
-    <Card>
+    <Card className="bg-[#23272f] text-[#ececf1] border-none shadow-2xl">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl">Sign in</CardTitle>
-        <CardDescription>
+        <CardTitle className="text-2xl text-[#ececf1]">Sign in</CardTitle>
+        <CardDescription className="text-[#b4bcd0]">
           Choose your preferred sign in method
         </CardDescription>
       </CardHeader>
@@ -21,9 +21,9 @@ export default function SignInPage() {
         <SignInForm />
       </CardContent>
       <CardFooter>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-[#b4bcd0]">
           Don&apos;t have an account?{' '}
-          <Link href="/sign-up" className="underline underline-offset-4 hover:text-primary">
+          <Link href="/sign-up" className="underline underline-offset-4 hover:text-[#19c37d]">
             Sign up
           </Link>
         </p>

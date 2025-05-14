@@ -51,25 +51,8 @@ export function SignUpForm() {
         throw signUpError
       }
 
-      // Create user profile
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      if (user) {
-        const { error: profileError } = await supabase
-          .from('users')
-          .insert({
-            id: user.id,
-            full_name: values.fullName,
-            email: values.email,
-          })
-
-        if (profileError) {
-          throw profileError
-        }
-      }
-
+      // Remove manual insert into users table
+      // Success state only
       setSuccess(true)
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An error occurred')
@@ -91,9 +74,9 @@ export function SignUpForm() {
             name="fullName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Full Name</FormLabel>
+                <FormLabel className="text-muted-foreground">Full Name</FormLabel>
                 <FormControl>
-                  <Input placeholder="John Doe" {...field} />
+                  <Input placeholder="John Doe" {...field} className="bg-input text-foreground border border-border focus:border-ring" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -104,9 +87,9 @@ export function SignUpForm() {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email</FormLabel>
+                <FormLabel className="text-muted-foreground">Email</FormLabel>
                 <FormControl>
-                  <Input placeholder="you@example.com" type="email" {...field} />
+                  <Input placeholder="you@example.com" type="email" {...field} className="bg-input text-foreground border border-border focus:border-ring" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -117,20 +100,20 @@ export function SignUpForm() {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Password</FormLabel>
+                <FormLabel className="text-muted-foreground">Password</FormLabel>
                 <FormControl>
-                  <Input placeholder="••••••••" type="password" {...field} />
+                  <Input placeholder="••••••••" type="password" {...field} className="bg-input text-foreground border border-border focus:border-ring" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
           {error && (
-            <div className="text-sm text-red-500">
+            <div className="text-sm text-destructive">
               {error}
             </div>
           )}
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold" disabled={isLoading}>
             {isLoading ? 'Creating account...' : 'Create account'}
           </Button>
         </form>

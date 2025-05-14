@@ -17,6 +17,15 @@ import '@testing-library/jest-dom'
 import Sidebar from '../sidebar'
 import SidebarItem from '../sidebar-item'
 
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+    refresh: vi.fn(),
+  }),
+}))
+
 const mockConversations = [
   { id: '1', user_id: 'u1', title: 'First chat', model: 'GPT-4o', created_at: '', updated_at: '', last_message_at: '', archived: false },
   { id: '2', user_id: 'u1', title: 'Second chat', model: 'GPT-4o', created_at: '', updated_at: '', last_message_at: '', archived: false },
