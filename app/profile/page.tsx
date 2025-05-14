@@ -3,6 +3,12 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Profile – ChatGPT Clone',
+  description: 'Manage your profile, update your name, or delete your account.'
+}
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<{ email: string; full_name: string } | null>(null)
