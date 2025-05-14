@@ -463,7 +463,7 @@ const ChatInput = React.memo(function ChatInput({ onOpenSearch, defaultModel }: 
                 </Tooltip.Content>
               </Tooltip.Portal>
             </Tooltip.Root>
-            {[Search, Globe, ImageIcon, MoreHorizontal].map((Icon, i) => (
+            {[Search].map((Icon, i) => (
               <Tooltip.Root key={i} delayDuration={200}>
                 <Tooltip.Trigger asChild>
                   <Button
@@ -487,7 +487,7 @@ const ChatInput = React.memo(function ChatInput({ onOpenSearch, defaultModel }: 
                       fontFamily: "var(--font-sans)",
                     }}
                   >
-                    {["Search", "Web search", "Create image", "More"][i]}
+                    {["Search"][i]}
                     <Tooltip.Arrow className="fill-[var(--popover)]" />
                   </Tooltip.Content>
                 </Tooltip.Portal>

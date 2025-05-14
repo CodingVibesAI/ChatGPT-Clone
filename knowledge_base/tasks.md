@@ -110,14 +110,13 @@
 
 ## Phase 6: User Settings and Preferences
 
-- [ ] Create settings page
-- [ ] Allow user to store their together.ai api key and use it for requests
-- [ ] Force users to use their own API key for model requests that are not free (we know free ones as they have "free" in the name)
-- [ ] Add message history preferences
-- [ ] Implement settings persistence
-- [ ] Add user profile management [name, email, account deletion]
+- [x] Create settings page
+- [x] Allow user to store their together.ai api key and use it for requests
+- [x] Force users to use their own API key for model requests that are not free (we know free ones as they have "free" in the name)
+- [x] Implement settings persistence
+- [x] Add user profile management [name, email, account deletion]
 
-## Phase 7: Performance and Polish
+## Phase 7: Performance and Polish (NEXT)
 
 - [ ] Implement proper error handling
 - [ ] Add loading states and skeletons

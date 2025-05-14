@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 const MAX_SIZE_MB = 10
 const ALLOWED_TYPES = [
   'image/png', 'image/jpeg', 'image/webp', 'application/pdf',
-  'text/plain', 'application/zip', 'application/json',
+  'text/plain', 'application/zip', 'application/json', 'text/markdown'
 ]
 
 export type FileUploadProps = {
