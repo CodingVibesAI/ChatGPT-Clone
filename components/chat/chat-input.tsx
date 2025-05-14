@@ -11,7 +11,7 @@ import { ChatCompletionStream } from "together-ai/lib/ChatCompletionStream";
 import { useMessages } from '@/hooks/use-messages';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Database } from '@/types/supabase';
-import { useConversationModel } from '@/hooks/use-conversation-model';
+import { useConversationModelStore } from '@/hooks/use-conversation-model-store'
 
 console.log('ChatInput mounted');
 
@@ -58,7 +58,8 @@ const ChatInput = React.memo(function ChatInput({ onOpenSearch, defaultModel }: 
   const [, forceRerender] = useState(0)
   const { data: messages } = useMessages(activeConversationId);
   const queryClient = useQueryClient();
-  const { model: selectedModel } = useConversationModel(activeConversationId, defaultModel);
+  const selectedModelRaw = useConversationModelStore(s => activeConversationId ? s.getModel(activeConversationId) : undefined)
+  const selectedModel = selectedModelRaw ?? null
   const pendingQueue = useRef<PendingMessage[]>([]);
   const [pendingMessages, setPendingMessages] = useState<PendingMessage[]>([]);
 

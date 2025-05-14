@@ -107,19 +107,15 @@
     - [x] Ensure chat requests use the selected model for the active conversation
 - [x] Implement model switching logic
     - [x] Allow switching models mid-conversation (with warning/restriction if needed)
-- [ ] Implement token usage tracking
-    - [ ] Track tokens used per conversation
-    - [ ] Show estimated cost per conversation
-- [ ] Create cost estimation component
 
 ## Phase 6: User Settings and Preferences
 
 - [ ] Create settings page
 - [ ] Allow user to store their together.ai api key and use it for requests
+- [ ] Force users to use their own API key for model requests that are not free (we know free ones as they have "free" in the name)
 - [ ] Add message history preferences
-- [ ] Create notification settings
 - [ ] Implement settings persistence
-- [ ] Add user profile management
+- [ ] Add user profile management [name, email, account deletion]
 
 ## Phase 7: Performance and Polish
 
@@ -127,9 +123,6 @@
 - [ ] Add loading states and skeletons
 - [ ] Optimize bundle size
 - [ ] Add proper SEO metadata
-- [ ] Implement analytics
-- [ ] Add error monitoring
-- [ ] Performance testing and optimization
 
 ## Phase 8: Testing and Documentation
 
@@ -143,10 +136,9 @@
 
 ## Phase 9: Deployment and CI/CD
 
-- [ ] Set up CI/CD pipeline
+- [ ] Set up CI/CD pipeline with Vercel
 - [ ] Configure production environment
-- [ ] Set up monitoring and logging
-- [ ] Implement security measures
+- [ ] Implement security measures following OWASP recommendations
 - [ ] Create deployment documentation
 - [ ] Perform security audit
 - [ ] Launch production environment

@@ -1,3 +1,4 @@
+// DEPRECATED: useConversationModel is no longer used. Replaced by useConversationModelStore (Zustand).
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { useQueryClient, useMutation } from '@tanstack/react-query'

@@ -1,9 +1,11 @@
+"use client";
+
 import { Share2, Settings, User, ChevronDown, Check } from 'lucide-react'
 import { useState, useRef, useEffect, useMemo } from 'react'
 import useSWR from 'swr'
 import { createPortal } from 'react-dom'
 import { useActiveConversation } from '@/hooks/use-active-conversation'
-import { useConversationModel } from '@/hooks/use-conversation-model'
+import { useConversationModelStore } from '@/hooks/use-conversation-model-store'
 
 const fetcher = (url: string) => fetch(url).then(res => res.json())
 
@@ -26,7 +28,22 @@ export default function Header() {
   // Get active conversation
   const activeConversationId = useActiveConversation(s => s.activeConversationId)
   const preferredDefault = models?.find(m => /deepseek/i.test(m.name) && /free/i.test(m.name))?.name || models?.[0]?.name
-  const { model: selectedModel, setModel: setSelectedModel, isLoading: isModelLoading } = useConversationModel(activeConversationId, preferredDefault)
+  const selectedModel = useConversationModelStore(s => activeConversationId ? s.getModel(activeConversationId) : undefined)
+  const setSelectedModel = (model: string) => {
+    if (activeConversationId) {
+      useConversationModelStore.getState().setModel(activeConversationId, model)
+      // Persist to Supabase in background (optional, can add here)
+    }
+  }
+  const isHydrated = useConversationModelStore(s => activeConversationId ? s.isHydrated[activeConversationId] : false)
+
+  // Only hydrate on client after mount
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (activeConversationId && preferredDefault && !isHydrated) {
+      useConversationModelStore.getState().hydrateModel(activeConversationId, preferredDefault)
+    }
+  }, [activeConversationId, preferredDefault, isHydrated])
 
   // Autofocus search input when dropdown opens
   useEffect(() => {
@@ -119,7 +136,6 @@ export default function Header() {
                   onClick={() => { setSelectedModel(model.name); setDropdownOpen(false); }}
                   role="option"
                   aria-selected={selectedModel === model.name}
-                  disabled={isModelLoading}
                 >
                   <span className="flex items-center gap-2 text-[16px]">
                     {model.description || model.name}
@@ -163,12 +179,11 @@ export default function Header() {
             onClick={() => setDropdownOpen((v) => !v)}
             aria-haspopup="listbox"
             aria-expanded={dropdownOpen}
-            disabled={isModelLoading}
           >
             <span>
               {models && selectedModel
                 ? (models.find(m => m.name === selectedModel)?.description || selectedModel)
-                : isModelLoading ? 'Loading...' : 'Select model'}
+                : 'Select model'}
             </span>
             <ChevronDown size={18} className={`transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
           </button>

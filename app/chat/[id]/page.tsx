@@ -1,18 +1,21 @@
 "use client";
+import React, { useEffect } from 'react';
 import Sidebar from '@/components/chat/sidebar'
 import ChatArea from '@/components/chat/chat-area'
 import Header from '@/components/layout/header'
 import Footer from '@/components/layout/footer'
 import { useState } from 'react'
+import { useActiveConversation } from '@/hooks/use-active-conversation'
 
-// PHASE 5: Together.AI model selection and chat integration in progress
-
-// This file will now redirect to the latest or default conversation, or show a landing page.
-// The main chat UI will be moved to app/chat/[id]/page.tsx
-
-export default function ChatPage() {
+export default function ChatPage({ params }: { params: { id: string } }) {
+  // Unwrap params if it's a promise (future-proof)
+  const { id } = (typeof (params as any).then === 'function') ? React.use(params) : params;
   const [sidebarOpen, setSidebarOpen] = useState(true)
-
+  const setActiveConversationId = useActiveConversation(s => s.setActiveConversationId)
+  useEffect(() => {
+    if (id) setActiveConversationId(id)
+  }, [id, setActiveConversationId])
+  if (!id) return <div className="flex items-center justify-center h-screen text-lg">Invalid conversation</div>
   return (
     <div className="flex h-screen w-full bg-gradient-to-b from-[#23272f] via-[#202123] to-[#131313] relative">
       {/* Sidebar as flex child, always rendered, mini when closed */}
