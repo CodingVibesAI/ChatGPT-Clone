@@ -1,6 +1,6 @@
 "use client";
 
-import { Share2, Settings, User, ChevronDown, Check } from 'lucide-react'
+import { Settings, User, ChevronDown, Check } from 'lucide-react'
 import { useState, useRef, useEffect, useMemo } from 'react'
 import useSWR from 'swr'
 import { createPortal } from 'react-dom'
@@ -195,7 +195,6 @@ export default function Header() {
         {dropdownMenu}
       </div>
       <div className="flex items-center gap-1">
-        <button className="p-1.5 rounded-full hover:bg-[#353740] transition-colors text-[#b4bcd0]" aria-label="Share"><Share2 size={20} /></button>
         <button className="p-1.5 rounded-full hover:bg-[#353740] transition-colors text-[#b4bcd0]" aria-label="Settings" onClick={() => setSettingsOpen(true)}><Settings size={20} /></button>
         <button className="p-1.5 rounded-full hover:bg-[#353740] transition-colors text-[#b4bcd0]" aria-label="Profile" onClick={() => { setDropdownOpen(false); setSettingsOpen(false); setProfileOpen(true) }}><User size={20} /></button>
       </div>
