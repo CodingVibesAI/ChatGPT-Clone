@@ -1,9 +1,15 @@
 import ChatMessage from './chat-message'
 import React, { useEffect, useRef } from 'react'
 import { Loader2 } from 'lucide-react'
+import type { Database } from '@/types/supabase'
 
 type ChatListProps = {
-  messages: { id: string; role: 'user' | 'assistant'; content: string }[]
+  messages: Array<{
+    id: string;
+    role: 'user' | 'assistant';
+    content: string;
+    attachments?: Database['public']['Tables']['attachments']['Row'][];
+  }>
   searchTerm?: string
   searchResults?: number[]
   activeResultIdx?: number
@@ -50,6 +56,7 @@ export default function ChatList({ messages, searchTerm, searchResults, activeRe
               content={msg.content || (msg.role === 'assistant' ? <span className="flex items-center gap-2 text-[#b4bcd0]"><Loader2 className="animate-spin w-4 h-4" /> Generating...</span> : '')}
               highlight={!!searchTerm && activeIdx === idx}
               searchTerm={searchTerm}
+              attachments={msg.attachments}
             />
           </div>
         </React.Fragment>

@@ -3,11 +3,20 @@ import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
 import React from 'react'
 
-export default function ChatMessage({ role, content, highlight, searchTerm }: {
+export default function ChatMessage({ role, content, highlight, searchTerm, attachments }: {
   role: 'user' | 'assistant',
   content: React.ReactNode,
   highlight?: boolean,
-  searchTerm?: string
+  searchTerm?: string,
+  attachments?: Array<{
+    file_name: string;
+    file_type: string;
+    file_path: string;
+    file_size: number;
+    created_at: string;
+    id: string;
+    message_id: string | null;
+  }>
 }) {
   // Highlight search term in content
   let displayContent: React.ReactNode = content
@@ -94,6 +103,19 @@ export default function ChatMessage({ role, content, highlight, searchTerm }: {
   return (
     <div className={`bg-[#545563] text-white rounded-2xl rounded-br-3xl px-6 py-4 max-w-full font-normal leading-relaxed whitespace-pre-line text-[15px]${highlight ? ' ring-2 ring-yellow-400/60' : ''}`} style={{ fontFamily: 'Inter, sans-serif', fontWeight: 400 }}>
       {displayContent}
+      {attachments && attachments.length > 0 && (
+        <div className="flex flex-wrap gap-2 mt-2">
+          {attachments.map(att => (
+            <span
+              key={att.id}
+              className="bg-[#23272f] border border-[#353740] rounded-lg px-3 py-1 text-xs text-[#ececf1] font-medium truncate max-w-[160px]"
+              title={att.file_name}
+            >
+              {att.file_name}
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   )
 } 

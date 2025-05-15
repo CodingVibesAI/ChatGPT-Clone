@@ -1,16 +1,14 @@
 import { useRef, useState } from 'react'
-import { supabase } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
 const MAX_SIZE_MB = 10
 const ALLOWED_TYPES = [
-  'image/png', 'image/jpeg', 'image/webp', 'application/pdf',
-  'text/plain', 'application/zip', 'application/json', 'text/markdown'
+  'image/png', 'image/jpeg', 'image/webp'
 ]
 
 export type FileUploadProps = {
-  onUpload: (file: { url: string; name: string; type: string; size: number }) => void
+  onUpload: (file: { base64: string; name: string; type: string; size: number }) => void
   disabled?: boolean
 }
 
@@ -25,7 +23,7 @@ export default function FileUpload({ onUpload, disabled }: FileUploadProps) {
     if (!files || files.length === 0) return
     const file = files[0]
     if (!ALLOWED_TYPES.includes(file.type)) {
-      setError('Unsupported file type')
+      setError('Only PNG, JPG, and WebP images are supported for Together AI vision.')
       return
     }
     if (file.size > MAX_SIZE_MB * 1024 * 1024) {
@@ -33,20 +31,14 @@ export default function FileUpload({ onUpload, disabled }: FileUploadProps) {
       return
     }
     setIsUploading(true)
-    const ext = file.name.split('.').pop()
-    const filePath = `uploads/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-    const { error: uploadError } = await supabase.storage.from('attachments').upload(filePath, file, {
-      cacheControl: '3600',
-      upsert: false,
+    const base64 = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result as string)
+      reader.onerror = reject
+      reader.readAsDataURL(file)
     })
-    if (uploadError) {
-      setError(uploadError.message)
-      setIsUploading(false)
-      return
-    }
-    const { data } = supabase.storage.from('attachments').getPublicUrl(filePath)
     setIsUploading(false)
-    onUpload({ url: data.publicUrl, name: file.name, type: file.type, size: file.size })
+    onUpload({ base64, name: file.name, type: file.type, size: file.size })
   }
 
   return (
@@ -81,7 +73,7 @@ export default function FileUpload({ onUpload, disabled }: FileUploadProps) {
       </Button>
       <span className="text-xs text-[#8e8ea0]">or drag & drop here</span>
       {error && <div className="text-xs text-red-500 mt-2">{error}</div>}
-      <span className="sr-only">Max size: 10MB. Allowed: PNG, JPG, WebP, PDF, TXT, ZIP, JSON.</span>
+      <span className="sr-only">Max size: 10MB. Allowed: PNG, JPG, WebP.</span>
     </div>
   )
 } 

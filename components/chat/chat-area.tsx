@@ -8,6 +8,7 @@ import { useActiveConversation } from '@/hooks/use-active-conversation'
 import { useMessages } from '@/hooks/use-messages'
 import ChatList from './chat-list'
 import { ChevronDown } from 'lucide-react'
+import type { Database } from '@/types/supabase'
 
 export default function ChatArea() {
   const { activeConversationId } = useActiveConversation()
@@ -20,6 +21,8 @@ export default function ChatArea() {
   const [activeResultIdx, setActiveResultIdx] = useState(0)
   const [isAtBottom, setIsAtBottom] = useState(true)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
+
+  type MessageWithAttachments = Database['public']['Tables']['messages']['Row'] & { attachments: Database['public']['Tables']['attachments']['Row'][] }
 
   // Update search results when term or messages change
   useEffect(() => {
@@ -85,10 +88,11 @@ export default function ChatArea() {
             >
               {messages && (
                 <ChatList
-                  messages={messages.map(m => ({
+                  messages={(messages as MessageWithAttachments[]).map(m => ({
                     id: m.id,
                     role: m.role as 'user' | 'assistant',
                     content: m.content,
+                    attachments: m.attachments,
                   }))}
                   searchTerm={searchTerm}
                   searchResults={searchResults}

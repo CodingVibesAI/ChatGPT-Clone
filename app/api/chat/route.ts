@@ -36,10 +36,22 @@ export async function POST(request: Request) {
 
     let finalMessages: Message[] = messages;
     if (attachments && attachments.length > 0) {
-      finalMessages = [
-        { role: 'system', content: `The user has attached the following image(s):\n${attachments.join('\n')}` },
-        ...messages,
-      ];
+      // Find last user message
+      const lastUserIdx = messages.map((m: Message) => m.role).lastIndexOf('user');
+      if (lastUserIdx !== -1) {
+        const userMsg = messages[lastUserIdx];
+        let contentArr: Array<{ type: string; text?: string; image_url?: { url: string } }> = [];
+        if (typeof userMsg.content === 'string') {
+          contentArr.push({ type: 'text', text: userMsg.content });
+        } else if (Array.isArray(userMsg.content)) {
+          contentArr = userMsg.content as Array<{ type: string; text?: string; image_url?: { url: string } }>;
+        }
+        for (const url of attachments) {
+          contentArr.push({ type: 'image_url', image_url: { url } });
+        }
+        messages[lastUserIdx] = { ...userMsg, content: contentArr };
+      }
+      finalMessages = messages;
     }
 
     const res = await createChatCompletionWithFallback({ model, messages: finalMessages });

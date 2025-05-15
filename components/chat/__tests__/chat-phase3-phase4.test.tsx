@@ -182,15 +182,15 @@ describe('Chat Phase 3 & 4', () => {
     await act(async () => {
       fireEvent.change(fileInput as HTMLInputElement, { target: { files: [file] } })
     })
-    // Preview should appear instantly
-    // Debug DOM
     screen.debug()
-    await waitFor(() => screen.getByTestId('attachment-filename'))
-    expect(screen.getByTestId('attachment-filename').textContent).toContain('fail.txt')
-    // Wait for error icon
-    await waitFor(() => expect(screen.getByText('!')).toBeInTheDocument())
-    // Should show the file name
-    expect(screen.getByTestId('attachment-filename').textContent).toContain('fail.txt')
+    // Preview should appear instantly
+    // Find the preview row and check for file name and error icon
+    await waitFor(() => {
+      const previewRow = document.querySelector('.flex.items-center.gap-4.mb-2');
+      if (!previewRow) throw new Error('No preview row');
+      if (!previewRow.textContent?.includes('fail.txt')) throw new Error('File name not found');
+      if (!previewRow.textContent?.includes('!')) throw new Error('Error icon not found');
+    });
   })
 
   it('queues message+attachment if conversation is temp and flushes on real ID', async () => {

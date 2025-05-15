@@ -28,6 +28,7 @@ type PendingMessage = {
     url: string;
     status: 'pending' | 'uploaded' | 'error';
     error?: string;
+    base64?: string;
   }>;
   model: string | null;
   messages: { role: string; content: string }[];
@@ -45,7 +46,7 @@ const ChatInput = React.memo(function ChatInput({ onOpenSearch, defaultModel }: 
   })
   const createMessage = useCreateMessage()
   const [error, setError] = useState<string | null>(null)
-  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [uploadError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const chatInputRef = useRef<HTMLInputElement>(null)
   const [inputValue, setInputValue] = useState('')
@@ -57,8 +58,8 @@ const ChatInput = React.memo(function ChatInput({ onOpenSearch, defaultModel }: 
     url: string;
     status: 'pending' | 'uploaded' | 'error';
     error?: string;
+    base64?: string;
   }>>([])
-  const [, forceRerender] = useState(0)
   const { data: messages } = useMessages(activeConversationId);
   const queryClient = useQueryClient();
   const selectedModelRaw = useConversationModelStore(s => activeConversationId ? s.getModel(activeConversationId) : undefined)
@@ -67,76 +68,6 @@ const ChatInput = React.memo(function ChatInput({ onOpenSearch, defaultModel }: 
   const [pendingMessages, setPendingMessages] = useState<PendingMessage[]>([]);
   const [showLimitModal, setShowLimitModal] = useState(false)
   const decrementPremiumCount = usePremiumQueryCountStore(s => s.decrement)
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log('handleFileChange', e.target.files)
-    setUploadError(null)
-    const files = e.target.files
-    if (!files || files.length === 0) return
-    const allowed = [
-      'image/png', 'image/jpeg', 'image/webp', 'application/pdf',
-      'text/plain', 'application/zip', 'application/json',
-    ]
-    for (const file of Array.from(files)) {
-      if (!allowed.includes(file.type)) {
-        setUploadError('Unsupported file type')
-        continue
-      }
-      if (file.size > 10 * 1024 * 1024) {
-        setUploadError('File too large (max 10MB)')
-        continue
-      }
-      // Optimistically add preview
-      let localUrl = ''
-      if (typeof window !== 'undefined' && typeof window.URL !== 'undefined' && typeof window.URL.createObjectURL === 'function') {
-        localUrl = window.URL.createObjectURL(file)
-      } else {
-        // fallback for test/SSR
-        localUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB...'
-      }
-      const ext = file.name.split('.').pop()
-      const filePath = `uploads/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-      setPendingAttachments(prev => {
-        const next: typeof prev = [
-          ...prev,
-          {
-            name: file.name,
-            type: file.type,
-            size: file.size,
-            filePath,
-            url: localUrl,
-            status: 'pending' as const,
-          },
-        ]
-        return next
-      })
-      forceRerender(n => n + 1)
-      // Start upload in background
-      void (async () => {
-        try {
-          const { error: uploadError } = await supabase.storage.from('attachments').upload(filePath, file, {
-            cacheControl: '3600',
-            upsert: false,
-          })
-          if (uploadError) {
-            setPendingAttachments(prev => prev.map(a =>
-              a.filePath === filePath ? { ...a, status: 'error', error: uploadError.message } : a
-            ))
-            return
-          }
-          const { data } = supabase.storage.from('attachments').getPublicUrl(filePath)
-          setPendingAttachments(prev => prev.map(a =>
-            a.filePath === filePath ? { ...a, url: data.publicUrl, status: 'uploaded' } : a
-          ))
-        } catch {
-          setPendingAttachments(prev => prev.map(a =>
-            a.filePath === filePath ? { ...a, status: 'error', error: 'Upload failed' } : a
-          ))
-        }
-      })()
-    }
-    if (fileInputRef.current) fileInputRef.current.value = ''
-  }
 
   const handleRemoveAttachment = (filePath: string) => {
     setPendingAttachments(prev => prev.filter(a => a.filePath !== filePath))
@@ -306,13 +237,14 @@ const ChatInput = React.memo(function ChatInput({ onOpenSearch, defaultModel }: 
             console.log('Assistant message created:', assistantMsg);
             let streamedContent = '';
             let res;
-            const imageUrls = pendingAttachments
-              .filter((att: { type: string }) => att.type.startsWith('image/'))
-              .map((att: { url: string }) => att.url);
+            // Only use base64 for Together AI attachments
+            const togetherAttachments = pendingAttachments
+              .filter(att => att.type.startsWith('image/') && att.base64)
+              .map(att => att.base64)
             try {
               res = await fetch('/api/chat', {
                 method: 'POST',
-                body: JSON.stringify({ messages: currentMessages, conversation_id: conversationId, model: selectedModel, attachments: imageUrls }),
+                body: JSON.stringify({ messages: currentMessages, conversation_id: conversationId, model: selectedModel, attachments: togetherAttachments }),
               });
               console.log('API response:', res);
             } catch (err) {
@@ -360,23 +292,13 @@ const ChatInput = React.memo(function ChatInput({ onOpenSearch, defaultModel }: 
           <div className="text-sm text-red-500 mb-2">{error}</div>
         )}
         {uploadError && <div className="text-xs text-red-500 mb-2">{uploadError}</div>}
-        {/* Hidden file input for upload icon */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          className="hidden"
-          accept="image/png,image/jpeg,image/webp,application/pdf,text/plain,application/zip,application/json"
-          onChange={handleFileChange}
-          disabled={createConversation.isPending || createMessage.isPending}
-          multiple
-        />
         {/* File preview row inside the input box, at the top */}
         <div className="flex items-center gap-4 mb-2 overflow-x-auto scrollbar-thin scrollbar-thumb-[#353740] scrollbar-track-transparent">
           {pendingAttachments.map(att => {
             console.log('preview row map', att)
             return (
               <div
-                key={att.filePath}
+                key={att.filePath || att.name || att.base64 || Math.random()}
                 className={`relative flex-shrink-0 w-16 h-16 rounded-2xl overflow-hidden bg-[#23272f] border border-[#353740] group`}
               >
                 {/* Status indicator (spinner or error) */}
@@ -402,7 +324,7 @@ const ChatInput = React.memo(function ChatInput({ onOpenSearch, defaultModel }: 
                 ) : (
                   <span className="flex items-center justify-center w-full h-full text-3xl text-[#b4bcd0]">📄</span>
                 )}
-                {/* Filename overlay at bottom */}
+                {/* Filename overlay at bottom (always show, even on error) */}
                 <div data-testid="attachment-filename" className="absolute bottom-0 left-0 w-full px-2 py-1 bg-gradient-to-t from-black/80 to-black/0 text-[11px] text-[#ececf1] truncate pointer-events-none font-medium">
                   {att.name}
                 </div>
@@ -534,6 +456,67 @@ const ChatInput = React.memo(function ChatInput({ onOpenSearch, defaultModel }: 
             </Tooltip.Portal>
           </Tooltip.Root>
         </div>
+        {/* Hidden file input for upload icon */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          className="hidden"
+          accept="image/png,image/jpeg,image/webp"
+          onChange={async e => {
+            const files = e.target.files;
+            if (!files || files.length === 0) return;
+            const file = files[0];
+            if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) {
+              setPendingAttachments(prev => [
+                ...prev,
+                {
+                  name: file.name,
+                  type: file.type,
+                  size: file.size,
+                  filePath: '',
+                  url: '',
+                  status: 'error',
+                  error: 'Unsupported file type',
+                }
+              ]);
+              return;
+            }
+            if (file.size > 10 * 1024 * 1024) {
+              setPendingAttachments(prev => [
+                ...prev,
+                {
+                  name: file.name,
+                  type: file.type,
+                  size: file.size,
+                  filePath: '',
+                  url: '',
+                  status: 'error',
+                  error: 'File too large',
+                }
+              ]);
+              return;
+            }
+            const base64 = await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(reader.result as string);
+              reader.onerror = reject;
+              reader.readAsDataURL(file);
+            });
+            setPendingAttachments(prev => [
+              ...prev,
+              {
+                name: file.name,
+                type: file.type,
+                size: file.size,
+                filePath: '',
+                url: base64,
+                status: 'uploaded',
+                base64,
+              }
+            ]);
+          }}
+          disabled={createConversation.isPending || createMessage.isPending}
+        />
         <style jsx global>{`
           input::placeholder {
             color: #b4bcd0 !important;

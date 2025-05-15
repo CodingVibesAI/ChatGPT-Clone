@@ -8,13 +8,13 @@ export function useMessages(conversationId?: string | null) {
     queryKey: ['messages', conversationId],
     queryFn: async () => {
       if (!isRealConversation) return []
-      const { data, error } = await supabase
+      const { data: messages, error } = await supabase
         .from('messages')
-        .select('*')
+        .select('*, attachments:attachments(*)')
         .eq('conversation_id', conversationId)
         .order('created_at', { ascending: true })
       if (error) throw error
-      return data as Database['public']['Tables']['messages']['Row'][]
+      return messages as Array<Database['public']['Tables']['messages']['Row'] & { attachments: Database['public']['Tables']['attachments']['Row'][] }>
     },
     enabled: isRealConversation,
     staleTime: 60 * 1000, // 1 minute
