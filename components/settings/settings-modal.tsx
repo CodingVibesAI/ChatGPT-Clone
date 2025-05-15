@@ -22,16 +22,25 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
     setSuccess(null)
     setApiKey('')
     setIsLoading(true)
-    fetch('/api/user-settings')
-      .then(res => res.json())
-      .then(data => {
+    // Always get JWT and send it in the header
+    async function fetchSettings() {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        const jwt = session?.access_token
+        const res = await fetch('/api/user-settings', {
+          headers: {
+            ...(jwt ? { 'Authorization': `Bearer ${jwt}` } : {}),
+          },
+        })
+        const data = await res.json()
         setHasKey(!!data.hasTogetherApiKey)
         setIsLoading(false)
-      })
-      .catch(() => {
+      } catch {
         setError('Failed to load settings')
         setIsLoading(false)
-      })
+      }
+    }
+    fetchSettings()
   }, [open])
 
   const handleSave = async (e: React.FormEvent) => {

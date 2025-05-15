@@ -38,7 +38,6 @@ export const metadata: Metadata = {
     creator: '@yourtwitter',
     images: ['/og-image.png'],
   },
-  themeColor: '#181a20',
   robots: {
     index: true,
     follow: true,
@@ -49,6 +48,10 @@ export const metadata: Metadata = {
     shortcut: '/favicon.ico',
     apple: '/apple-touch-icon.png',
   },
+}
+
+export const viewport = {
+  themeColor: '#181a20',
 }
 
 // PHASE 5: Together.AI model selection and chat integration in progress

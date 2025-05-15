@@ -6,6 +6,8 @@ const schema = z.object({
   together_api_key: z.string().min(1).max(128).optional().or(z.literal('')),
 })
 
+// NOTE: This route uses SUPABASE_SERVICE_ROLE_KEY for all DB access and only accepts JWT via Authorization header. Cookies are NOT used.
+
 function getSupabaseAdmin() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -17,6 +19,7 @@ async function getUserFromAuthHeader(req: NextRequest) {
   const authHeader = req.headers.get('authorization')
   if (!authHeader) return null
   const jwt = authHeader.replace('Bearer ', '')
+  if (!jwt) return null
   const supabase = getSupabaseAdmin()
   const { data: { user }, error } = await supabase.auth.getUser(jwt)
   if (error || !user) return null

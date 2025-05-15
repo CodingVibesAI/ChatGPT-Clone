@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   description: 'Continue your conversation with AI in a modern, professional chat UI.'
 }
 
-export default function ChatPage({ params }: { params: { id: string } }) {
-  return <ClientChatPage id={params.id} />
+export default async function ChatPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  return <ClientChatPage id={id} />
 } 
