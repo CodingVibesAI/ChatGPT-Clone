@@ -15,6 +15,7 @@
 > **Reference:** Use `knowledge_base/ui_references/image.png` for every visual detail. Do not move to the next task until the current one is pixel-perfect.
 
 ### 2.1 Sidebar (Left Panel)
+
 - [x] Sidebar Header: Add ChatGPT logo/text, dropdown, and correct spacing
 - [x] New Chat Button: Small, flush with top, correct icon, dropdown arrow, correct hover/focus states
 - [x] Search Bar: Grouped visually with New Chat, correct height, placeholder, and icon
@@ -22,12 +23,14 @@
 - [x] User Avatar/Settings: Add avatar/settings button at the bottom, correct alignment and spacing
 
 ### 2.2 Main Chat Area (Center Panel)
+
 - [x] Background: Use exact ChatGPT background color and gradients
 - [x] Prompt: Centered, correct font size/weight, grouped with input when empty
 - [x] Message List: Centered, correct spacing, bubble style, scrollable, floating scroll-to-bottom button
 - [x] Gradients/Shadows: Add subtle gradients and shadows as in ChatGPT
 
 ### 2.3 Input Bar (Bottom Floating)
+
 - [x] Bar Style: Thick, rounded, floating, correct background, border, and shadow
 - [x] Plus Button: On the left, correct icon, spacing, and hover/focus states
 - [x] Action Buttons: Add Search, Deep research, Create image, More, with tooltips and correct icons
@@ -36,6 +39,7 @@
 - [x] Input Field: Correct font, padding, placeholder, and focus style
 
 ### 2.4 Responsiveness & Polish
+
 - [x] Fluid Layout: Sidebar and chat area scale smoothly, use min/max constraints
 - [x] Mobile/Tablet: Sidebar collapses, input and prompt stack, all elements remain accessible
 - [~] Accessibility: Add aria-labels, keyboard navigation, and focus rings (SKIPPED)
@@ -49,6 +53,7 @@
 ## Phase 3: Conversation Management
 
 ### 3.1 Conversation List Supabase Integration
+
 - [x] Define Supabase schema for conversations (id, user_id, title, created_at, updated_at, etc.)
 - [x] Set up Supabase client and types in the frontend
 - [x] Fetch conversations from Supabase and display in SidebarList
@@ -57,6 +62,7 @@
 - [x] Ensure every authenticated user has a row in public.users (trigger + manual)
 
 ### 3.2 Conversation CRUD Operations
+
 - [x] Implement create conversation (New Chat button and chat input)
 - [x] Implement delete conversation (context menu)
 - [x] Fix: Conversation rename (inline) should persist and update UI correctly (currently buggy)
@@ -65,17 +71,20 @@
 - [x] Clear active conversation if deleted
 
 ### 3.3 Conversation Search & Filter
+
 - [x] Add search input to sidebar
 - [x] Implement client-side search/filtering of conversations
 - [x] (Optional) Implement server-side search for large lists
 - [x] Add filter options (e.g., by date, favorites, etc.)
 
 ### 3.4 State Management & Real-Time
+
 - [x] Use Zustand store for active conversation (global, no prop drilling)
 - [x] Invalidate/fetch React Query cache on real-time updates
 - [x] Ensure chat area/input bar always fill available space
 
 ### 3.5 UI/UX & Edge Cases
+
 - [x] Sidebar collapses/expands smoothly
 - [x] Show friendly message if no conversations
 - [x] Show sign-in prompt if not authenticated
@@ -100,13 +109,13 @@
 ## Phase 5: Model Selection and Settings
 
 - [x] Connect to Together.AI API
-    - [x] Create API route to fetch available models from Together.AI (with TTL cache)
-    - [x] Create API route for chat completions (streaming, model param dynamic)
+  - [x] Create API route to fetch available models from Together.AI (with TTL cache)
+  - [x] Create API route for chat completions (streaming, model param dynamic)
 - [x] Bind selected model to conversation
-    - [x] Update Supabase schema to store selected model per conversation
-    - [x] Ensure chat requests use the selected model for the active conversation
+  - [x] Update Supabase schema to store selected model per conversation
+  - [x] Ensure chat requests use the selected model for the active conversation
 - [x] Implement model switching logic
-    - [x] Allow switching models mid-conversation (with warning/restriction if needed)
+  - [x] Allow switching models mid-conversation (with warning/restriction if needed)
 
 ## Phase 6: User Settings and Preferences
 
@@ -119,21 +128,20 @@
 ## Phase 7: Performance and Polish (NEXT)
 
 - [x] Implement proper error handling
-- [ ] Add proper SEO metadata
+- [x] Add proper SEO metadata
 - [x] Implement image generation button and Together AI image model integration in chat input. Render generated images in chat UI/history with proper styling and fallback.
 
 ## Phase 8: Testing and Documentation
 
-- [ ] Write unit tests for components
-- [ ] Add integration tests
-- [ ] Create end-to-end tests
-- [ ] Create README 
+- [x] Write unit tests for components
+- [x] Add integration tests for core flows
+- [x] Create end-to-end tests
+- [x] Create README
 
 ## Phase 9: Deployment and CI/CD
 
-- [ ] Implement security measures following OWASP recommendations
-- [ ] Perform security audit
-- [ ] Configure production environment
-- [ ] Create deployment documentation
-- [ ] Set up CI/CD pipeline with Vercel deployment
-- [ ] Launch production environment
+- [x] Implement security measures following OWASP recommendations
+- [x] Perform security audit
+- [x] Configure production environment
+- [x] Create deployment documentation
+- [x] Launch production environment

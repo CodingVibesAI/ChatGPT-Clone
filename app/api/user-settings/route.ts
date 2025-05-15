@@ -26,7 +26,30 @@ async function getUserFromAuthHeader(req: NextRequest) {
   return user
 }
 
+// Simple in-memory rate limiter (per IP, per minute)
+const rateLimitMap = new Map<string, { count: number, last: number }>()
+const RATE_LIMIT = 30 // requests
+const RATE_WINDOW = 60 * 1000 // 1 minute
+
+function rateLimit(req: NextRequest) {
+  const ip = req.headers.get('x-forwarded-for') || 'unknown'
+  const now = Date.now()
+  const entry = rateLimitMap.get(ip) || { count: 0, last: now }
+  if (now - entry.last > RATE_WINDOW) {
+    entry.count = 0
+    entry.last = now
+  }
+  entry.count++
+  rateLimitMap.set(ip, entry)
+  if (entry.count > RATE_LIMIT) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+  }
+  return null
+}
+
 export async function GET(req: NextRequest) {
+  const limit = rateLimit(req)
+  if (limit) return limit
   const user = await getUserFromAuthHeader(req)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const supabase = getSupabaseAdmin()
@@ -44,6 +67,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const limit = rateLimit(req)
+  if (limit) return limit
   const user = await getUserFromAuthHeader(req)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const body = await req.json()
@@ -62,6 +87,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
+  const limit = rateLimit(req)
+  if (limit) return limit
   const user = await getUserFromAuthHeader(req)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const body = await req.json()

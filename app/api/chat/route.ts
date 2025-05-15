@@ -5,6 +5,11 @@ const together = new Together();
 
 type Message = CompletionCreateParams.Message;
 
+// Simple in-memory rate limiter (per IP, per minute)
+const rateLimitMap = new Map<string, { count: number, last: number }>()
+const RATE_LIMIT = 30 // requests
+const RATE_WINDOW = 60 * 1000 // 1 minute
+
 async function createChatCompletionWithFallback({ model, messages }: { model: string, messages: Message[] }) {
   try {
     return await together.chat.completions.create({
@@ -31,6 +36,20 @@ async function createChatCompletionWithFallback({ model, messages }: { model: st
 }
 
 export async function POST(request: Request) {
+  // Rate limiting
+  const ip = request.headers.get('x-forwarded-for') || 'unknown'
+  const now = Date.now()
+  const entry = rateLimitMap.get(ip) || { count: 0, last: now }
+  if (now - entry.last > RATE_WINDOW) {
+    entry.count = 0
+    entry.last = now
+  }
+  entry.count++
+  rateLimitMap.set(ip, entry)
+  if (entry.count > RATE_LIMIT) {
+    return new Response(JSON.stringify({ error: 'Too many requests' }), { status: 429, headers: { 'Content-Type': 'application/json' } })
+  }
+
   try {
     const { messages, model = "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo", attachments } = await request.json();
 

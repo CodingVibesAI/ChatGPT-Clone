@@ -2,14 +2,32 @@ let cachedModels: { name: string; description: string; price_per_million: number
 let cacheTimestamp = 0;
 const CACHE_TTL = 60 * 60 * 1000; // 60 minutes
 
-export async function GET() {
+// Simple in-memory rate limiter (per IP, per minute)
+const rateLimitMap = new Map<string, { count: number, last: number }>()
+const RATE_LIMIT = 30 // requests
+const RATE_WINDOW = 60 * 1000 // 1 minute
+
+export async function GET(request: Request) {
   const apiKey = process.env.TOGETHER_API_KEY;
 
   if (!apiKey) {
     return new Response(JSON.stringify({ error: 'Missing Together.AI API key' }), { status: 500 });
   }
 
-  const now = Date.now();
+  // Rate limiting
+  const ip = request.headers.get('x-forwarded-for') || 'unknown'
+  const now = Date.now()
+  const entry = rateLimitMap.get(ip) || { count: 0, last: now }
+  if (now - entry.last > RATE_WINDOW) {
+    entry.count = 0
+    entry.last = now
+  }
+  entry.count++
+  rateLimitMap.set(ip, entry)
+  if (entry.count > RATE_LIMIT) {
+    return new Response(JSON.stringify({ error: 'Too many requests' }), { status: 429, headers: { 'Content-Type': 'application/json' } })
+  }
+
   if (cachedModels && now - cacheTimestamp < CACHE_TTL) {
     return Response.json(cachedModels);
   }

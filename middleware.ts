@@ -10,6 +10,24 @@ export async function middleware(request: NextRequest) {
   // Refresh session if expired - required for Server Components
   await supabase.auth.getSession()
   
+  // Add security headers for HTML/JSON responses only
+  const accept = request.headers.get('accept') || ''
+  if (accept.includes('text/html') || accept.includes('application/json')) {
+    res.headers.set('Content-Security-Policy', [
+      "default-src 'self';",
+      "img-src 'self' data: https:;",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval';",
+      "style-src 'self' 'unsafe-inline';",
+      "font-src 'self' data:;",
+      "connect-src *;",
+      "frame-ancestors 'none';"
+    ].join(' '))
+    res.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload')
+    res.headers.set('X-Frame-Options', 'DENY')
+    res.headers.set('X-Content-Type-Options', 'nosniff')
+    res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+    res.headers.set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()')
+  }
   return res
 }
 

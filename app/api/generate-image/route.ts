@@ -1,7 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
+// Simple in-memory rate limiter (per IP, per minute)
+const rateLimitMap = new Map<string, { count: number, last: number }>()
+const RATE_LIMIT = 10 // requests
+const RATE_WINDOW = 60 * 1000 // 1 minute
+
 export async function POST(req: NextRequest) {
+  // Rate limiting
+  const ip = req.headers.get('x-forwarded-for') || 'unknown'
+  const now = Date.now()
+  const entry = rateLimitMap.get(ip) || { count: 0, last: now }
+  if (now - entry.last > RATE_WINDOW) {
+    entry.count = 0
+    entry.last = now
+  }
+  entry.count++
+  rateLimitMap.set(ip, entry)
+  if (entry.count > RATE_LIMIT) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+  }
+
   const { prompt } = await req.json()
   if (!prompt) return NextResponse.json({ error: 'Missing prompt' }, { status: 400 })
 
