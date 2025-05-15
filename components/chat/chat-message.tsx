@@ -92,6 +92,29 @@ export default function ChatMessage({ role, content, highlight, searchTerm, atta
               li: (props) => <li className="mb-1" {...props} />,
               strong: (props) => <strong className="font-semibold" {...props} />,
               code: (props) => <code className="bg-[#f7f7fa] px-1 py-0.5 rounded text-sm text-[#23272f]" {...props} />,
+              img: ({ src, alt }) => (
+                <div className="my-3 flex justify-center">
+                  <img
+                    src={src || ''}
+                    alt={alt || 'generated image'}
+                    loading="lazy"
+                    className="rounded-2xl border border-[#353740] shadow-lg max-w-xs max-h-80 object-contain bg-[#23272f]"
+                    style={{ display: 'block', margin: '0 auto' }}
+                  />
+                </div>
+              ),
+              p: ({ children }) => {
+                // If any child is a div (our custom img wrapper), unwrap all children
+                if (
+                  Array.isArray(children) &&
+                  children.some(
+                    (child) => React.isValidElement(child) && child.type === 'div'
+                  )
+                ) {
+                  return <>{children}</>;
+                }
+                return <p>{children}</p>;
+              },
             }}
           >
             {typeof content === 'string' ? content : ''}

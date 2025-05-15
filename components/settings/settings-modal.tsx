@@ -1,5 +1,6 @@
 import { ReactNode, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { supabase } from '@/lib/supabase/client'
 
 interface SettingsModalProps {
   open: boolean
@@ -22,10 +23,15 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
     setApiKey('')
     setIsLoading(true)
     fetch('/api/user-settings')
-      .then(r => r.json())
-      .then(d => setHasKey(!!d.hasTogetherApiKey))
-      .catch(() => setHasKey(null))
-      .finally(() => setIsLoading(false))
+      .then(res => res.json())
+      .then(data => {
+        setHasKey(!!data.hasTogetherApiKey)
+        setIsLoading(false)
+      })
+      .catch(() => {
+        setError('Failed to load settings')
+        setIsLoading(false)
+      })
   }, [open])
 
   const handleSave = async (e: React.FormEvent) => {
@@ -33,20 +39,25 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
     setIsSaving(true)
     setError(null)
     setSuccess(null)
-    const res = await fetch('/api/user-settings', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ together_api_key: apiKey }),
-    })
-    const data = await res.json()
-    if (!res.ok) {
-      setError(data.error || 'Failed to save')
-      setIsSaving(false)
-      return
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const jwt = session?.access_token
+      const res = await fetch('/api/user-settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(jwt ? { 'Authorization': `Bearer ${jwt}` } : {}),
+        },
+        body: JSON.stringify({ together_api_key: apiKey.trim() }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to save')
+      setApiKey('')
+      setSuccess('API key saved')
+      setHasKey(true)
+    } catch (err: unknown) {
+      setError(err && typeof err === 'object' && 'message' in err && typeof (err as { message?: unknown }).message === 'string' ? (err as { message: string }).message : 'Failed to save')
     }
-    setApiKey('')
-    setSuccess('API key saved')
-    setHasKey(true)
     setIsSaving(false)
   }
 
@@ -54,19 +65,24 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
     setIsSaving(true)
     setError(null)
     setSuccess(null)
-    const res = await fetch('/api/user-settings', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ together_api_key: '' }),
-    })
-    const data = await res.json()
-    if (!res.ok) {
-      setError(data.error || 'Failed to remove')
-      setIsSaving(false)
-      return
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const jwt = session?.access_token
+      const res = await fetch('/api/user-settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(jwt ? { 'Authorization': `Bearer ${jwt}` } : {}),
+        },
+        body: JSON.stringify({ together_api_key: '' }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to remove')
+      setSuccess('API key removed')
+      setHasKey(false)
+    } catch (err: unknown) {
+      setError(err && typeof err === 'object' && 'message' in err && typeof (err as { message?: unknown }).message === 'string' ? (err as { message: string }).message : 'Failed to remove')
     }
-    setSuccess('API key removed')
-    setHasKey(false)
     setIsSaving(false)
   }
 
@@ -102,7 +118,7 @@ export default function SettingsModal({ open, onClose }: SettingsModalProps) {
           ) : (
             <>
               <div className="mb-2 text-sm text-[#b4bcd0]">
-                {hasKey === null ? '—' : hasKey ? 'API key is set.' : 'No API key set.'}
+                {isLoading ? 'Loading...' : hasKey === null ? '—' : hasKey ? 'API key is set.' : 'No API key set.'}
               </div>
               <form onSubmit={handleSave} className="flex flex-col gap-2">
                 <input

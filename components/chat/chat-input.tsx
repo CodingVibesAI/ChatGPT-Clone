@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { LucideSend, Search, Upload } from 'lucide-react'
+import { LucideSend, Search, Upload, Image as LucideImage } from 'lucide-react'
 import * as Tooltip from '@radix-ui/react-tooltip'
 import { useActiveConversation } from '@/hooks/use-active-conversation'
 import { useCreateConversation } from '@/hooks/use-create-conversation'
@@ -37,6 +37,11 @@ type PendingMessage = {
   }>;
   model: string | null;
   messages: { role: string; content: string }[];
+};
+
+const isImageModel = (model: string | null | undefined) => {
+  if (!model) return false;
+  return /flux|image|black-forest-labs/i.test(model);
 };
 
 const ChatInput = React.memo(function ChatInput({ onOpenSearch, defaultModel }: { onOpenSearch?: () => void, defaultModel?: string }) {
@@ -116,6 +121,52 @@ const ChatInput = React.memo(function ChatInput({ onOpenSearch, defaultModel }: 
       setPendingMessages([]);
     }
   }, [activeConversationId]);
+
+  const handleGenerateImage = async () => {
+    if (!isImageModel(selectedModel)) {
+      toast.error('Current model cannot generate images.');
+      return;
+    }
+    if (!inputValue.trim()) {
+      toast.error('Enter a prompt to generate an image.');
+      return;
+    }
+    // Get Supabase JWT for secure auth
+    const { data: { session } } = await supabase.auth.getSession();
+    const jwt = session?.access_token;
+    if (!jwt) {
+      toast.error('You must be signed in to generate images.');
+      return;
+    }
+    try {
+      const model = selectedModel ?? '';
+      if (!model) throw new Error('No model selected');
+      const res = await fetch('/api/generate-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${jwt}`,
+        },
+        body: JSON.stringify({ prompt: inputValue.trim() }),
+      });
+      const data = await res.json();
+      const url = data?.data?.[0]?.url;
+      if (!url) throw new Error('No image returned');
+      // Add as a new message in chat (simulate user + assistant)
+      setInputValue('');
+      setPendingAttachments([]);
+      if (!activeConversationId || typeof activeConversationId !== 'string') {
+        toast.error('No active conversation.');
+        return;
+      }
+      await createMessage.mutateAsync({ conversation_id: activeConversationId, content: inputValue.trim(), role: 'user' });
+      await createMessage.mutateAsync({ conversation_id: activeConversationId, content: `![generated image](${url})`, role: 'assistant' });
+      toast.success('Image generated!');
+    } catch (err: unknown) {
+      const msg = typeof err === 'object' && err && 'message' in err ? (err as { message?: string }).message : String(err);
+      toast.error('Image generation failed: ' + (msg || 'Unknown error'));
+    }
+  };
 
   return (
     <>
@@ -433,36 +484,64 @@ const ChatInput = React.memo(function ChatInput({ onOpenSearch, defaultModel }: 
                 </Tooltip.Content>
               </Tooltip.Portal>
             </Tooltip.Root>
-            {[Search].map((Icon, i) => (
-              <Tooltip.Root key={i} delayDuration={200}>
-                <Tooltip.Trigger asChild>
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
-                    className="w-10 h-10 text-[#ececf1] bg-transparent border-none shadow-none hover:bg-transparent focus:bg-transparent active:bg-transparent"
-                    onClick={i === 0 && onOpenSearch ? onOpenSearch : undefined}
-                  >
-                    <Icon size={18} />
-                  </Button>
-                </Tooltip.Trigger>
-                <Tooltip.Portal>
-                  <Tooltip.Content
-                    sideOffset={8}
-                    className="px-3 py-1.5 rounded-md text-xs shadow-lg border z-50"
-                    style={{
-                      background: "var(--popover)",
-                      color: "var(--popover-foreground)",
-                      borderColor: "var(--border)",
-                      fontFamily: "var(--font-sans)",
-                    }}
-                  >
-                    {["Search"][i]}
-                    <Tooltip.Arrow className="fill-[var(--popover)]" />
-                  </Tooltip.Content>
-                </Tooltip.Portal>
-              </Tooltip.Root>
-            ))}
+            <Tooltip.Root delayDuration={200}>
+              <Tooltip.Trigger asChild>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  className="w-10 h-10 text-[#ececf1] bg-transparent border-none shadow-none hover:bg-transparent focus:bg-transparent active:bg-transparent"
+                  onClick={onOpenSearch}
+                  aria-label="Search"
+                >
+                  <Search size={18} />
+                </Button>
+              </Tooltip.Trigger>
+              <Tooltip.Portal>
+                <Tooltip.Content
+                  sideOffset={8}
+                  className="px-3 py-1.5 rounded-md text-xs shadow-lg border z-50"
+                  style={{
+                    background: "var(--popover)",
+                    color: "var(--popover-foreground)",
+                    borderColor: "var(--border)",
+                    fontFamily: "var(--font-sans)",
+                  }}
+                >
+                  Search
+                  <Tooltip.Arrow className="fill-[var(--popover)]" />
+                </Tooltip.Content>
+              </Tooltip.Portal>
+            </Tooltip.Root>
+            <Tooltip.Root delayDuration={200}>
+              <Tooltip.Trigger asChild>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  className="w-10 h-10 text-[#ececf1] bg-transparent border-none shadow-none hover:bg-transparent focus:bg-transparent active:bg-transparent"
+                  onClick={handleGenerateImage}
+                  aria-label="Generate image"
+                >
+                  <LucideImage size={18} />
+                </Button>
+              </Tooltip.Trigger>
+              <Tooltip.Portal>
+                <Tooltip.Content
+                  sideOffset={8}
+                  className="px-3 py-1.5 rounded-md text-xs shadow-lg border z-50"
+                  style={{
+                    background: "var(--popover)",
+                    color: "var(--popover-foreground)",
+                    borderColor: "var(--border)",
+                    fontFamily: "var(--font-sans)",
+                  }}
+                >
+                  Generate Image
+                  <Tooltip.Arrow className="fill-[var(--popover)]" />
+                </Tooltip.Content>
+              </Tooltip.Portal>
+            </Tooltip.Root>
           </div>
           <Tooltip.Root delayDuration={200}>
             <Tooltip.Trigger asChild>

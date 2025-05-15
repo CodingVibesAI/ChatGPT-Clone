@@ -1,26 +1,16 @@
 "use client";
 
 import { useEffect, useState } from 'react'
-import useSWR from 'swr'
 import { usePremiumQueryCountStore } from '@/hooks/use-premium-query-count-store'
 
 export default function SidebarFooter() {
-  const fetcher = (url: string) => fetch(url).then(res => res.json())
-  const { data: userSettings } = useSWR('/api/user-settings', fetcher, { revalidateOnFocus: false })
   const count = usePremiumQueryCountStore(s => s.count)
-  const isUnlimited = usePremiumQueryCountStore(s => s.isUnlimited)
-  const syncFromDb = usePremiumQueryCountStore(s => s.syncFromDb)
+  const isUnlimited = typeof window !== 'undefined' && !!localStorage.getItem('together_api_key')
   const [hydrated, setHydrated] = useState(false)
 
   useEffect(() => {
     setHydrated(true)
   }, [])
-
-  useEffect(() => {
-    if (userSettings && typeof userSettings.dailyQueryCount === 'number') {
-      syncFromDb(userSettings.dailyQueryCount, !!userSettings.hasTogetherApiKey)
-    }
-  }, [userSettings, syncFromDb])
 
   if (!hydrated) return null
 
