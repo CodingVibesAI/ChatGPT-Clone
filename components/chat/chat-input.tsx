@@ -15,6 +15,10 @@ import { useConversationModelStore } from '@/hooks/use-conversation-model-store'
 import { createPortal } from 'react-dom'
 import { usePremiumQueryCountStore } from '@/hooks/use-premium-query-count-store'
 import { toast } from 'react-hot-toast'
+// @ts-expect-error pdfjs-dist has no proper ESM types, safe to ignore for import
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf';
+import type { TextContent, TextItem, TextMarkedContent } from 'pdfjs-dist/types/src/display/api';
+import mammoth from 'mammoth';
 
 console.log('ChatInput mounted');
 
@@ -29,6 +33,7 @@ type PendingMessage = {
     status: 'pending' | 'uploaded' | 'error';
     error?: string;
     base64?: string;
+    text?: string;
   }>;
   model: string | null;
   messages: { role: string; content: string }[];
@@ -59,6 +64,7 @@ const ChatInput = React.memo(function ChatInput({ onOpenSearch, defaultModel }: 
     status: 'pending' | 'uploaded' | 'error';
     error?: string;
     base64?: string;
+    text?: string;
   }>>([])
   const { data: messages } = useMessages(activeConversationId);
   const queryClient = useQueryClient();
@@ -142,8 +148,14 @@ const ChatInput = React.memo(function ChatInput({ onOpenSearch, defaultModel }: 
           console.log('Form submitted');
           e.preventDefault();
           setError(null)
-          const content = inputValue.trim()
-          if (!content && pendingAttachments.length === 0) {
+          // Combine inputValue and extracted file texts for LLM
+          const fileTexts = pendingAttachments
+            .filter(att => att.text)
+            .map(att => `--- Attached file: ${att.name} ---\n${att.text}`)
+            .join('\n\n');
+          const userContent = inputValue.trim();
+          const llmContent = [userContent, fileTexts].filter(Boolean).join('\n\n');
+          if (!llmContent && pendingAttachments.length === 0) {
             console.log('No content or attachments, returning early');
             return;
           }
@@ -177,23 +189,23 @@ const ChatInput = React.memo(function ChatInput({ onOpenSearch, defaultModel }: 
                 if (!conversationId || conversationId.startsWith('temp-')) {
                   // Queue the message and attachments
                   pendingQueue.current.push({
-                    content,
+                    content: userContent,
                     attachments: [...pendingAttachments],
                     model: selectedModel,
                     messages: [
                       ...(messages?.map((m: { role: string; content: string }) => ({ role: m.role, content: m.content })) || []),
-                      { role: 'user', content }
+                      { role: 'user', content: llmContent }
                     ],
                   });
                   setPendingMessages([
                     ...pendingMessages,
                     {
-                      content,
+                      content: userContent,
                       attachments: [...pendingAttachments],
                       model: selectedModel,
                       messages: [
                         ...(messages?.map((m: { role: string; content: string }) => ({ role: m.role, content: m.content })) || []),
-                        { role: 'user', content }
+                        { role: 'user', content: llmContent }
                       ],
                     },
                   ]);
@@ -212,8 +224,8 @@ const ChatInput = React.memo(function ChatInput({ onOpenSearch, defaultModel }: 
               setError('Invalid conversation. Please try again.');
               return;
             }
-            // Create the user message
-            const msg = await createMessage.mutateAsync({ conversation_id: conversationId, content, role: 'user' })
+            // Create the user message (store only userContent)
+            const msg = await createMessage.mutateAsync({ conversation_id: conversationId, content: userContent, role: 'user' })
             // Insert all pending attachments
             for (const att of pendingAttachments) {
               await supabase.from('attachments').insert({
@@ -229,7 +241,7 @@ const ChatInput = React.memo(function ChatInput({ onOpenSearch, defaultModel }: 
             // Use the latest messages (including the new user message)
             const currentMessages = [
               ...(messages?.map(m => ({ role: m.role, content: m.content })) || []),
-              { role: 'user', content }
+              { role: 'user', content: llmContent }
             ];
             // Add a placeholder assistant message
             console.log('Creating assistant message...');
@@ -296,10 +308,43 @@ const ChatInput = React.memo(function ChatInput({ onOpenSearch, defaultModel }: 
         <div className="flex items-center gap-4 mb-2 overflow-x-auto scrollbar-thin scrollbar-thumb-[#353740] scrollbar-track-transparent">
           {pendingAttachments.map(att => {
             console.log('preview row map', att)
+            if (att.type.startsWith('image/') || /\.(png|jpe?g|webp)$/i.test(att.name)) {
+              return (
+                <div
+                  key={att.filePath || att.name || att.base64 || Math.random()}
+                  className={`relative flex-shrink-0 w-16 h-16 rounded-2xl overflow-hidden bg-[#23272f] border border-[#353740] group`}
+                >
+                  {/* Status indicator (spinner or error) */}
+                  {att.status === 'pending' && (
+                    <span className="absolute -top-3 -left-3 w-7 h-7 flex items-center justify-center bg-[#23272f] rounded-full shadow animate-spin text-[#b4bcd0] z-20 border-2 border-[#353740]">⏳</span>
+                  )}
+                  {att.status === 'error' && (
+                    <span className="absolute -top-3 -left-3 w-7 h-7 flex items-center justify-center bg-[#23272f] rounded-full shadow text-red-500 z-20 border-2 border-[#353740]">!</span>
+                  )}
+                  {/* Remove X button */}
+                  <button
+                    type="button"
+                    className="absolute top-1 right-1 w-6 h-6 flex items-center justify-center rounded-full bg-[#353740] text-[#ececf1] hover:bg-red-500 hover:text-white text-sm border-2 border-[#23272f] shadow z-20"
+                    onClick={() => handleRemoveAttachment(att.filePath)}
+                    aria-label="Remove attachment"
+                    tabIndex={0}
+                  >
+                    ×
+                  </button>
+                  {/* Always show file name overlay, even on error */}
+                  <div data-testid="attachment-filename" className="absolute bottom-0 left-0 w-full px-2 py-1 bg-gradient-to-t from-black/80 to-black/0 text-[11px] text-[#ececf1] truncate pointer-events-none font-medium">
+                    {att.name}
+                  </div>
+                  {/* Only show image if not error */}
+                  {att.status !== 'error' && <img src={att.url} alt={att.name} className="object-cover w-full h-full" />}
+                </div>
+              )
+            }
+            // Text-based or other files: show file name and preview text if available
             return (
               <div
                 key={att.filePath || att.name || att.base64 || Math.random()}
-                className={`relative flex-shrink-0 w-16 h-16 rounded-2xl overflow-hidden bg-[#23272f] border border-[#353740] group`}
+                className="relative flex flex-col justify-between w-40 min-h-[48px] max-h-32 bg-[#23272f] border border-[#353740] rounded-xl p-2 overflow-hidden group"
               >
                 {/* Status indicator (spinner or error) */}
                 {att.status === 'pending' && (
@@ -318,16 +363,13 @@ const ChatInput = React.memo(function ChatInput({ onOpenSearch, defaultModel }: 
                 >
                   ×
                 </button>
-                {/* File preview (image or icon) */}
-                {att.type.startsWith('image/') || /\.(png|jpe?g|webp)$/i.test(att.name) ? (
-                  <img src={att.url} alt={att.name} className="object-cover w-full h-full" />
-                ) : (
-                  <span className="flex items-center justify-center w-full h-full text-3xl text-[#b4bcd0]">📄</span>
+                {/* Always show file name, even on error */}
+                <div className="truncate text-xs text-[#ececf1] font-medium mb-1" data-testid="attachment-filename">{att.name}</div>
+                {att.text && (
+                  <div className="text-xs text-[#b4bcd0] max-h-16 overflow-y-auto whitespace-pre-line font-mono border-t border-[#353740] pt-1">
+                    {att.text.slice(0, 200)}{att.text.length > 200 ? '…' : ''}
+                  </div>
                 )}
-                {/* Filename overlay at bottom (always show, even on error) */}
-                <div data-testid="attachment-filename" className="absolute bottom-0 left-0 w-full px-2 py-1 bg-gradient-to-t from-black/80 to-black/0 text-[11px] text-[#ececf1] truncate pointer-events-none font-medium">
-                  {att.name}
-                </div>
               </div>
             )
           })}
@@ -461,26 +503,11 @@ const ChatInput = React.memo(function ChatInput({ onOpenSearch, defaultModel }: 
           ref={fileInputRef}
           type="file"
           className="hidden"
-          accept="image/png,image/jpeg,image/webp"
+          accept="*"
           onChange={async e => {
             const files = e.target.files;
             if (!files || files.length === 0) return;
             const file = files[0];
-            if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) {
-              setPendingAttachments(prev => [
-                ...prev,
-                {
-                  name: file.name,
-                  type: file.type,
-                  size: file.size,
-                  filePath: '',
-                  url: '',
-                  status: 'error',
-                  error: 'Unsupported file type',
-                }
-              ]);
-              return;
-            }
             if (file.size > 10 * 1024 * 1024) {
               setPendingAttachments(prev => [
                 ...prev,
@@ -496,24 +523,155 @@ const ChatInput = React.memo(function ChatInput({ onOpenSearch, defaultModel }: 
               ]);
               return;
             }
-            const base64 = await new Promise<string>((resolve, reject) => {
-              const reader = new FileReader();
-              reader.onload = () => resolve(reader.result as string);
-              reader.onerror = reject;
-              reader.readAsDataURL(file);
-            });
-            setPendingAttachments(prev => [
-              ...prev,
-              {
-                name: file.name,
-                type: file.type,
-                size: file.size,
-                filePath: '',
-                url: base64,
-                status: 'uploaded',
-                base64,
+            // PDF extraction
+            if (file.type === 'application/pdf') {
+              try {
+                // Use local worker in public folder for Next.js compatibility
+                pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                let text = '';
+                for (let i = 1; i <= pdf.numPages; i++) {
+                  const page = await pdf.getPage(i);
+                  const content: TextContent = await page.getTextContent();
+                  text += content.items.map((item: TextItem | TextMarkedContent) => {
+                    // Only TextItem has .str
+                    return 'str' in item ? (item.str || '') : '';
+                  }).join(' ') + '\n';
+                }
+                if (text.length > 16000) text = text.slice(0, 16000) + '\n... [truncated]';
+                setPendingAttachments(prev => [
+                  ...prev,
+                  {
+                    name: file.name,
+                    type: file.type,
+                    size: file.size,
+                    filePath: '',
+                    url: '',
+                    status: 'uploaded',
+                    text,
+                  }
+                ]);
+              } catch {
+                setPendingAttachments(prev => [
+                  ...prev,
+                  {
+                    name: file.name,
+                    type: file.type,
+                    size: file.size,
+                    filePath: '',
+                    url: '',
+                    status: 'error',
+                    error: 'Failed to extract PDF text',
+                  }
+                ]);
+                toast.error('Failed to extract PDF text');
               }
-            ]);
+              return;
+            }
+            // DOCX extraction
+            if (file.name.endsWith('.docx')) {
+              try {
+                const arrayBuffer = await file.arrayBuffer();
+                const { value: text } = await mammoth.extractRawText({ arrayBuffer });
+                let docText = text;
+                if (docText.length > 16000) docText = docText.slice(0, 16000) + '\n... [truncated]';
+                setPendingAttachments(prev => [
+                  ...prev,
+                  {
+                    name: file.name,
+                    type: file.type,
+                    size: file.size,
+                    filePath: '',
+                    url: '',
+                    status: 'uploaded',
+                    text: docText,
+                  }
+                ]);
+              } catch {
+                setPendingAttachments(prev => [
+                  ...prev,
+                  {
+                    name: file.name,
+                    type: file.type,
+                    size: file.size,
+                    filePath: '',
+                    url: '',
+                    status: 'error',
+                    error: 'Failed to extract DOCX text',
+                  }
+                ]);
+                toast.error('Failed to extract DOCX text');
+              }
+              return;
+            }
+            // Plain text/markdown
+            if (file.type.startsWith('text/') || file.name.endsWith('.md')) {
+              try {
+                const text = await file.text();
+                let fileText = text;
+                if (fileText.length > 16000) fileText = fileText.slice(0, 16000) + '\n... [truncated]';
+                setPendingAttachments(prev => [
+                  ...prev,
+                  {
+                    name: file.name,
+                    type: file.type,
+                    size: file.size,
+                    filePath: '',
+                    url: '',
+                    status: 'uploaded',
+                    text: fileText,
+                  }
+                ]);
+              } catch {
+                setPendingAttachments(prev => [
+                  ...prev,
+                  {
+                    name: file.name,
+                    type: file.type,
+                    size: file.size,
+                    filePath: '',
+                    url: '',
+                    status: 'error',
+                    error: 'Failed to extract text file',
+                  }
+                ]);
+                toast.error('Failed to extract text file');
+              }
+              return;
+            }
+            if (file.type.startsWith('image/')) {
+              const base64 = await new Promise<string>((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result as string);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+              });
+              setPendingAttachments(prev => [
+                ...prev,
+                {
+                  name: file.name,
+                  type: file.type,
+                  size: file.size,
+                  filePath: '',
+                  url: base64,
+                  status: 'uploaded',
+                  base64,
+                }
+              ]);
+            } else {
+              setPendingAttachments(prev => [
+                ...prev,
+                {
+                  name: file.name,
+                  type: file.type,
+                  size: file.size,
+                  filePath: '',
+                  url: '',
+                  status: 'uploaded',
+                }
+              ]);
+            }
           }}
           disabled={createConversation.isPending || createMessage.isPending}
         />

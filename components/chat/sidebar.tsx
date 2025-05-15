@@ -1,3 +1,4 @@
+"use client";
 import { useState } from 'react'
 import SidebarHeader from './sidebar-header'
 import SidebarList from './sidebar-list'

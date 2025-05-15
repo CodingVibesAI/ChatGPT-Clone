@@ -1,3 +1,4 @@
+"use client";
 import { LucidePlus, Menu } from 'lucide-react'
 import { useCreateConversation } from '@/hooks/use-create-conversation'
 import { useActiveConversation } from '@/hooks/use-active-conversation'

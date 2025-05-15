@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState } from 'react'
 import useSWR from 'swr'
 import { usePremiumQueryCountStore } from '@/hooks/use-premium-query-count-store'

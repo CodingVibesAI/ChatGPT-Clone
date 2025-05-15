@@ -1,20 +1,12 @@
 "use client";
+// This file will now redirect to the latest or default conversation, or show a landing page.
+// The main chat UI will be moved to app/chat/[id]/page.tsx
+
 import Sidebar from '@/components/chat/sidebar'
 import ChatArea from '@/components/chat/chat-area'
 import Header from '@/components/layout/header'
 import Footer from '@/components/layout/footer'
 import { useState } from 'react'
-import type { Metadata } from 'next'
-
-// PHASE 5: Together.AI model selection and chat integration in progress
-
-// This file will now redirect to the latest or default conversation, or show a landing page.
-// The main chat UI will be moved to app/chat/[id]/page.tsx
-
-export const metadata: Metadata = {
-  title: 'ChatGPT Clone – Chat',
-  description: 'Chat with AI in a beautiful, modern dark UI. Powered by Next.js and Supabase.'
-}
 
 export default function ChatPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true)

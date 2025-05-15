@@ -1,3 +1,4 @@
+"use client";
 import React, { useState, useRef, useEffect } from 'react'
 import { MessageSquare, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import { useActiveConversation } from '@/hooks/use-active-conversation'
