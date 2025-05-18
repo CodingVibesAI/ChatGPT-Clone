@@ -30,7 +30,7 @@ export function useUpdateConversation(options?: UseMutationOptions<
         queryClient.setQueryData(['conversations', variables.user_id], context.previous)
       }
     },
-    onSuccess: (_data, variables, context?: { previous: { id: string; user_id: string; title: string }[] }) => {
+    onSuccess: (_data, variables, context: { previous: { id: string; user_id: string; title: string }[] }) => {
       queryClient.invalidateQueries({ queryKey: ['conversations', variables.user_id] })
       options?.onSuccess?.(_data, variables, context)
     },

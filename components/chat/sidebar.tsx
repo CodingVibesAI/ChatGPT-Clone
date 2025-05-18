@@ -88,7 +88,7 @@ export default function Sidebar({ open, setOpen }: { open: boolean, setOpen: (op
     >
       {open ? (
         <>
-          <SidebarHeader open={open} setOpen={setOpen} userId={userId} defaultModel={defaultModel} />
+          <SidebarHeader open={open} setOpen={setOpen} userId={userId} />
           {/* Search input always visible */}
           <div className="px-2 pb-2">
             <input
