@@ -1,0 +1,14 @@
+name: Supabase Keep Alive
+
+on:
+  schedule:
+    - cron: "0 6 * * *" # Runs every day at 6:00 UTC
+  workflow_dispatch:
+
+jobs:
+  keep-alive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase Edge Function
+        run: |
+          curl -sSf https://jwrrtusokaiwaafkbfxq.supabase.co/functions/v1/keep-alive
