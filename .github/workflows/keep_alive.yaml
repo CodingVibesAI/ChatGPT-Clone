@@ -11,4 +11,4 @@ jobs:
     steps:
       - name: Ping Supabase Edge Function
         run: |
-          curl -sSf https://jwrrtusokaiwaafkbfxq.supabase.co/functions/v1/keep-alive
+          curl -sSf -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" https://jwrrtusokaiwaafkbfxq.supabase.co/functions/v1/keep-alive
